@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<otobo_package version="1.0">
+    <Name>HideShowInAgentTicketCompose</Name>
+    <Version>10.1.0</Version>
+    <Framework>10.1.x</Framework>
+    <Vendor>Rother OSS GmbH</Vendor>
+    <URL>https://rother-oss.com/</URL>
+    <License>GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007</License>
+    <Description Lang="en">..</Description>
+    <Filelist>
+        <File Permission="660" Location="Custom/Kernel/Modules/AgentTicketCompose.pm" />
+        <File Permission="660" Location="Custom/Kernel/Output/HTML/Templates/Standard/AgentTicketCompose.tt" />
+    </Filelist>
+</otobo_package>
