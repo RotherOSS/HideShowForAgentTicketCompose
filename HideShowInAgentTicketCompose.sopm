@@ -9,6 +9,5 @@
     <Description Lang="en">..</Description>
     <Filelist>
         <File Permission="660" Location="Custom/Kernel/Modules/AgentTicketCompose.pm" />
-        <File Permission="660" Location="Custom/Kernel/Output/HTML/Templates/Standard/AgentTicketCompose.tt" />
     </Filelist>
 </otobo_package>
