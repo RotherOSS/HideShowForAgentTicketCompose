@@ -515,8 +515,6 @@ sub Run {
         $DynamicFieldACLParameters{ 'DynamicField_' . $DynamicFieldItem } = $DynamicFieldValues{$DynamicFieldItem};
     }
     $GetParam{DynamicField} = \%DynamicFieldACLParameters;
-    use Data::Dx;
-    Dx $GetParam{DynamicField};
 
     # transform pending time, time stamp based on user time zone
     if (
@@ -972,9 +970,6 @@ sub Run {
             }
         }
 # EO HideShowInAgentTicketCompose
-
-        # create html strings for all dynamic fields
-        my %DynamicFieldHTML;
 
         # cycle trough the activated Dynamic Fields for this screen
         DYNAMICFIELD:
@@ -1528,9 +1523,7 @@ sub Run {
         my %DynFieldStates = (
             Visibility => {},
             Fields     => {},
-# Rother OSS / HideShowInAgentTicketCompose
             Sets       => {},
-# EO HideShowInAgentTicketCompose
         );
 
         until ( $Convergence{Fields} ) {
@@ -2358,9 +2351,7 @@ sub Run {
         my %DynFieldStates = (
             Visibility => {},
             Fields     => {},
-# Rother OSS / HideShowInAgentTicketCompose
             Sets       => {},
-# EO HideShowInAgentTicketCompose
         );
 
         my $InitialRun = 1;
@@ -2528,6 +2519,7 @@ sub Run {
                 : undef
         } ( keys $Self->{DynamicField}->%* );
 # EO HideShowInAgentTicketCompose
+
         # build references if exist
         my $References = ( $Data{MessageID} || '' ) . ( $Data{References} || '' );
 
@@ -2909,9 +2901,6 @@ sub _Mask {
 #             = map { 'DynamicField_' . $_ => $Param{ 'DynamicField_' . $_ } } grep { $DynamicFieldConfigs{$_}->{ObjectType} eq 'Ticket' } keys %DynamicFieldConfigs;
 # EO HideShowInAgentTicketCompose
 
-        use Data::Dx;
-        Dx $Self->{DynamicField};
-        Dx $Param{DynamicField};
         $Param{DynamicFieldHTML} = $Kernel::OM->Get('Kernel::Output::HTML::DynamicField::Mask')->EditSectionRender(
             Content              => $Self->{MaskDefinition},
 # Rother OSS / HideShowInAgentTicketCompose
