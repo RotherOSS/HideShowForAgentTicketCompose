@@ -65,7 +65,10 @@ sub new {
         Mask => $Self->{Action},
     ) || {};
 
-    $Self->{DynamicField}   = [];
+# Rother OSS / HideShowInAgentTicketCompose
+#     $Self->{DynamicField}   = [];
+    $Self->{DynamicField}   = {};
+# EO HideShowInAgentTicketCompose
     $Self->{MaskDefinition} = $Definition->{Mask};
 
     # align sysconfig and ticket mask data I
@@ -88,19 +91,28 @@ sub new {
             }
         }
 
-        push $Self->{DynamicField}->@*, $DynamicField;
+# Rother OSS / HideShowInAgentTicketCompose
+#         push $Self->{DynamicField}->@*, $DynamicField;
+        $Self->{DynamicField}{ $DynamicField->{Name} } = $DynamicField;
+# EO HideShowInAgentTicketCompose
     }
 
     # align sysconfig and ticket mask data II
     for my $DynamicFieldName ( keys $Definition->{DynamicFields}->%* ) {
-        push $Self->{DynamicField}->@*, $DynamicFieldObject->DynamicFieldGet(
+# Rother OSS / HideShowInAgentTicketCompose
+#         push $Self->{DynamicField}->@*, $DynamicFieldObject->DynamicFieldGet(
+        $Self->{DynamicField}{ $DynamicFieldName } = $DynamicFieldObject->DynamicFieldGet(
+# EO HideShowInAgentTicketCompose
             Name => $DynamicFieldName,
         );
 
         my $Parameters = $Definition->{DynamicFields}{$DynamicFieldName} // {};
 
         for my $Attribute ( keys $Parameters->%* ) {
-            $Self->{DynamicField}[-1]{$Attribute} = $Parameters->{$Attribute};
+# Rother OSS / HideShowInAgentTicketCompose
+#             $Self->{DynamicField}[-1]{$Attribute} = $Parameters->{$Attribute};
+            $Self->{DynamicField}{$DynamicFieldName}{$Attribute} = $Parameters->{$Attribute};
+# EO HideShowInAgentTicketCompose
         }
     }
 
@@ -478,7 +490,10 @@ sub Run {
 
     # cycle trough the activated Dynamic Fields for this screen
     DYNAMICFIELD:
-    for my $DynamicFieldConfig ( @{ $Self->{DynamicField} } ) {
+# Rother OSS / HideShowInAgentTicketCompose
+#     for my $DynamicFieldConfig ( @{ $Self->{DynamicField} } ) {
+    for my $DynamicFieldConfig ( values $Self->{DynamicField}->%* ) {
+# EO HideShowInAgentTicketCompose
         next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
 
         # extract the dynamic field value from the web request
@@ -500,6 +515,8 @@ sub Run {
         $DynamicFieldACLParameters{ 'DynamicField_' . $DynamicFieldItem } = $DynamicFieldValues{$DynamicFieldItem};
     }
     $GetParam{DynamicField} = \%DynamicFieldACLParameters;
+    use Data::Dx;
+    Dx $GetParam{DynamicField};
 
     # transform pending time, time stamp based on user time zone
     if (
@@ -851,7 +868,7 @@ sub Run {
         my %Visibility;
 
         # transform dynamic field data into DFName => DFName pair
-        my %DynamicFieldAcl = map { $_->{Name} => $_->{Name} } @{$DynamicField};
+        my %DynamicFieldAcl = map { $_ => $_ } keys $Self->{DynamicField}->%*;
 
         # call ticket ACLs for DynamicFields to check field visibility
         my $ACLResult = $TicketObject->TicketAcl(
@@ -863,15 +880,96 @@ sub Run {
             Data           => \%DynamicFieldAcl,
             UserID         => $Self->{UserID},
         );
+
         if ($ACLResult) {
-            %Visibility = map { 'DynamicField_' . $_->{Name} => 0 } @{$DynamicField};
+            %Visibility = map { 'DynamicField_' . $_ => 0 } keys $Self->{DynamicField}->%*;
             my %AclData = $TicketObject->TicketAclData();
             for my $Field ( sort keys %AclData ) {
                 $Visibility{ 'DynamicField_' . $Field } = 1;
             }
         }
         else {
-            %Visibility = map { 'DynamicField_' . $_->{Name} => 1 } @{$DynamicField};
+            %Visibility = map { 'DynamicField_' . $_ => 1 } keys $Self->{DynamicField}->%*;
+        }
+
+        # remember dynamic field validation results if erroneous
+        my %DynamicFieldValidationResult;
+        my %DynamicFieldPossibleValues;
+
+        # cycle through the activated Dynamic Fields for this screen
+        DYNAMICFIELD:
+        for my $DynamicFieldConfig ( values $Self->{DynamicField}->%* ) {
+            next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
+
+            my $PossibleValuesFilter;
+
+            my $IsACLReducible = $DynamicFieldBackendObject->HasBehavior(
+                DynamicFieldConfig => $DynamicFieldConfig,
+                Behavior           => 'IsACLReducible',
+            );
+
+            if ($IsACLReducible) {
+
+                # get PossibleValues
+                my $PossibleValues = $DynamicFieldBackendObject->PossibleValuesGet(
+                    DynamicFieldConfig => $DynamicFieldConfig,
+                );
+
+                # check if field has PossibleValues property in its configuration
+                if ( IsHashRefWithData($PossibleValues) ) {
+
+                    # convert possible values key => value to key => key for ACLs using a Hash slice
+                    my %AclData = %{$PossibleValues};
+                    @AclData{ keys %AclData } = keys %AclData;
+
+                    # set possible values filter from ACLs
+                    my $ACL = $TicketObject->TicketAcl(
+                        %GetParam,
+                        CustomerUserID => $Ticket{CustomerUser} || '',
+                        Action         => $Self->{Action},
+                        ReturnType     => 'Ticket',
+                        ReturnSubType  => 'DynamicField_' . $DynamicFieldConfig->{Name},
+                        Data           => \%AclData,
+                        UserID         => $Self->{UserID},
+                    );
+                    if ($ACL) {
+                        my %Filter = $TicketObject->TicketAclData();
+
+                        # convert Filer key => key back to key => value using map
+                        %{$PossibleValuesFilter} = map { $_ => $PossibleValues->{$_} }
+                            keys %Filter;
+                    }
+                }
+            }
+
+            $DynamicFieldPossibleValues{ 'DynamicField_' . $DynamicFieldConfig->{Name} } = $PossibleValuesFilter;
+
+            # do not validate on invisible fields
+            if ( $Visibility{ 'DynamicField_' . $DynamicFieldConfig->{Name} } ) {
+
+                my $ValidationResult = $DynamicFieldBackendObject->EditFieldValueValidate(
+                    DynamicFieldConfig   => $DynamicFieldConfig,
+                    PossibleValuesFilter => $PossibleValuesFilter,
+                    ParamObject          => $ParamObject,
+
+                    # Mandatory is added to the configs by $Self->new
+                    Mandatory => $DynamicFieldConfig->{Mandatory},
+                );
+
+                if ( !IsHashRefWithData($ValidationResult) ) {
+                    return $LayoutObject->ErrorScreen(
+                        Message =>
+                            $LayoutObject->{LanguageObject}->Translate( 'Could not perform validation on field %s!', $DynamicFieldConfig->{Label} ),
+                        Comment => Translatable('Please contact the administrator.'),
+                    );
+                }
+
+                # propagate validation error to the Error variable to be detected by the frontend
+                if ( $ValidationResult->{ServerError} ) {
+                    $Error{ $DynamicFieldConfig->{Name} }                        = ' ServerError';
+                    $DynamicFieldValidationResult{ $DynamicFieldConfig->{Name} } = $ValidationResult;
+                }
+            }
         }
 # EO HideShowInAgentTicketCompose
 
@@ -880,7 +978,10 @@ sub Run {
 
         # cycle trough the activated Dynamic Fields for this screen
         DYNAMICFIELD:
-        for my $DynamicFieldConfig ( @{ $Self->{DynamicField} } ) {
+# Rother OSS / HideShowInAgentTicketCompose
+#         for my $DynamicFieldConfig ( @{ $Self->{DynamicField} } ) {
+        for my $DynamicFieldConfig ( values $Self->{DynamicField}->%* ) {
+# EO HideShowInAgentTicketCompose
             next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
 
             my $PossibleValuesFilter;
@@ -924,15 +1025,18 @@ sub Run {
                 }
             }
 
+            $DynamicFieldPossibleValues{ 'DynamicField_' . $DynamicFieldConfig->{Name} } = $PossibleValuesFilter;
+
 # Rother OSS / HideShowInAgentTicketCompose
 #             my $ValidationResult = $DynamicFieldBackendObject->EditFieldValueValidate(
 #                 DynamicFieldConfig   => $DynamicFieldConfig,
 #                 PossibleValuesFilter => $PossibleValuesFilter,
 #                 ParamObject          => $ParamObject,
-#                 Mandatory            =>
-#                     $Config->{DynamicField}->{ $DynamicFieldConfig->{Name} } == 2,
+# 
+#                 # Mandatory is added to the configs by $Self->new
+#                 Mandatory => $DynamicFieldConfig->{Mandatory},
 #             );
-#
+# 
 #             if ( !IsHashRefWithData($ValidationResult) ) {
 #                 return $LayoutObject->ErrorScreen(
 #                     Message => $LayoutObject->{LanguageObject}->Translate(
@@ -942,11 +1046,14 @@ sub Run {
 #                     Comment => Translatable('Please contact the administrator.'),
 #                 );
 #             }
-#
+# 
 #             # propagate validation error to the Error variable to be detected by the frontend
 #             if ( $ValidationResult->{ServerError} ) {
-#                 $Error{ $DynamicFieldConfig->{Name} } = ' ServerError';
+#                 $Error{ $DynamicFieldConfig->{Name} }                        = ' ServerError';
+#                 $DynamicFieldValidationResult{ $DynamicFieldConfig->{Name} } = $ValidationResult;
 #             }
+# 
+#         }
             my $ValidationResult;
 
             # do not validate on invisible fields
@@ -956,8 +1063,9 @@ sub Run {
                     DynamicFieldConfig   => $DynamicFieldConfig,
                     PossibleValuesFilter => $PossibleValuesFilter,
                     ParamObject          => $ParamObject,
-                    Mandatory            =>
-                        $Config->{DynamicField}->{ $DynamicFieldConfig->{Name} } == 2,
+
+                    # Mandatory is added to the configs by $Self->new
+                    Mandatory => $DynamicFieldConfig->{Mandatory},
                 );
 
                 if ( !IsHashRefWithData($ValidationResult) ) {
@@ -971,24 +1079,11 @@ sub Run {
                 # propagate validation error to the Error variable to be detected by the frontend
                 if ( $ValidationResult->{ServerError} ) {
                     $Error{ $DynamicFieldConfig->{Name} } = ' ServerError';
+                    $DynamicFieldValidationResult{ $DynamicFieldConfig->{Name} } = $ValidationResult;
                 }
             }
 
 # EO HideShowInAgentTicketCompose
-            # get field html
-            $DynamicFieldHTML{ $DynamicFieldConfig->{Name} } =
-                $DynamicFieldBackendObject->EditFieldRender(
-                    DynamicFieldConfig   => $DynamicFieldConfig,
-                    PossibleValuesFilter => $PossibleValuesFilter,
-                    Mandatory            =>
-                    $Config->{DynamicField}->{ $DynamicFieldConfig->{Name} } == 2,
-                    ServerError     => $ValidationResult->{ServerError}  || '',
-                    ErrorMessage    => $ValidationResult->{ErrorMessage} || '',
-                    LayoutObject    => $LayoutObject,
-                    ParamObject     => $ParamObject,
-                    AJAXUpdate      => 1,
-                    UpdatableFields => $Self->_GetFieldsToUpdate(),
-                );
         }
 
         if ( $Self->{LoadedFormDraftID} ) {
@@ -1031,7 +1126,6 @@ sub Run {
                 GetParam            => \%GetParam,
                 TicketBackType      => $TicketBackType,
                 %Ticket,
-                DynamicFieldHTML => \%DynamicFieldHTML,
 # Rother OSS / HideShowInAgentTicketCompose
                 Visibility => \%Visibility,
 # EO HideShowInAgentTicketCompose
@@ -1169,7 +1263,10 @@ sub Run {
         # set dynamic fields
         # cycle trough the activated Dynamic Fields for this screen
         DYNAMICFIELD:
-        for my $DynamicFieldConfig ( @{ $Self->{DynamicField} } ) {
+# Rother OSS / HideShowInAgentTicketCompose
+#         for my $DynamicFieldConfig ( @{ $Self->{DynamicField} } ) {
+        for my $DynamicFieldConfig ( values $Self->{DynamicField}->%* ) {
+# EO HideShowInAgentTicketCompose
             next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
             next DYNAMICFIELD if $DynamicFieldConfig->{Readonly};
 
@@ -1342,23 +1439,23 @@ sub Run {
 # Rother OSS / HideShowInAgentTicketCompose
 #         # cycle trough the activated Dynamic Fields for this screen
 #         DYNAMICFIELD:
-#         for my $DynamicFieldConfig ( @{$DynamicField} ) {
+#         for my $DynamicFieldConfig ( @{ $Self->{DynamicField} } ) {
 #             next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
-#
+# 
 #             my $IsACLReducible = $DynamicFieldBackendObject->HasBehavior(
 #                 DynamicFieldConfig => $DynamicFieldConfig,
 #                 Behavior           => 'IsACLReducible',
 #             );
 #             next DYNAMICFIELD if !$IsACLReducible;
-#
+# 
 #             my $PossibleValues = $DynamicFieldBackendObject->PossibleValuesGet(
 #                 DynamicFieldConfig => $DynamicFieldConfig,
 #             );
-#
+# 
 #             # convert possible values key => value to key => key for ACLs using a Hash slice
 #             my %AclData = %{$PossibleValues};
 #             @AclData{ keys %AclData } = keys %AclData;
-#
+# 
 #             # set possible values filter from ACLs
 #             my $ACL = $TicketObject->TicketAcl(
 #                 %GetParam,
@@ -1372,17 +1469,17 @@ sub Run {
 #             );
 #             if ($ACL) {
 #                 my %Filter = $TicketObject->TicketAclData();
-#
+# 
 #                 # convert Filer key => key back to key => value using map
 #                 %{$PossibleValues} = map { $_ => $PossibleValues->{$_} } keys %Filter;
 #             }
-#
+# 
 #             my $DataValues = $DynamicFieldBackendObject->BuildSelectionDataGet(
 #                 DynamicFieldConfig => $DynamicFieldConfig,
 #                 PossibleValues     => $PossibleValues,
 #                 Value              => $DynamicFieldValues{ $DynamicFieldConfig->{Name} },
 #             ) || $PossibleValues;
-#
+# 
 #             # add dynamic field to the list of fields to update
 #             push(
 #                 @DynamicFieldAJAX,
@@ -1431,6 +1528,9 @@ sub Run {
         my %DynFieldStates = (
             Visibility => {},
             Fields     => {},
+# Rother OSS / HideShowInAgentTicketCompose
+            Sets       => {},
+# EO HideShowInAgentTicketCompose
         );
 
         until ( $Convergence{Fields} ) {
@@ -1519,13 +1619,6 @@ sub Run {
                     %ChangedElements = %NewChangedElements;
                 }
 
-                if ( !%NewChangedElements ) {
-                    $Convergence{StdFields} = 1;
-                }
-                else {
-                    %ChangedElements = %NewChangedElements;
-                }
-
                 %ChangedElementsDFStart = (
                     %ChangedElementsDFStart,
                     %NewChangedElements,
@@ -1551,7 +1644,7 @@ sub Run {
                 # get values and visibility of dynamic fields
                 %CurFieldStates = $FieldRestrictionsObject->GetFieldStates(
                     TicketObject              => $TicketObject,
-                    DynamicFields             => $DynamicField,
+                    DynamicFields             => $Self->{DynamicField},
                     DynamicFieldBackendObject => $DynamicFieldBackendObject,
                     ChangedElements           => \%ChangedElements,            # optional to reduce ACL evaluation
                     Action                    => $Self->{Action},
@@ -1576,6 +1669,10 @@ sub Run {
                     %{ $DynFieldStates{Visibility} },
                     %{ $CurFieldStates{Visibility} },
                 };
+                $DynFieldStates{Sets} = {
+                    %{ $DynFieldStates{Sets} },
+                    %{ $CurFieldStates{Sets} },
+                };
 
                 # store new values
                 $GetParam{DynamicField} = {
@@ -1597,19 +1694,46 @@ sub Run {
 
         # cycle through the activated Dynamic Fields for this screen
         DYNAMICFIELD:
-        for my $Index ( sort keys %{ $DynFieldStates{Fields} } ) {
-            my $DynamicFieldConfig = $DynamicField->[$Index];
+        for my $Name ( sort keys %{ $DynFieldStates{Fields} } ) {
+            my $DynamicFieldConfig = $Self->{DynamicField}{$Name};
 
-            my $DataValues = $DynFieldStates{Fields}{$Index}{NotACLReducible}
+            if ( $DynamicFieldConfig->{Config}{MultiValue} && ref $GetParam{DynamicField}{"DynamicField_$DynamicFieldConfig->{Name}"} eq 'ARRAY' ) {
+                for my $i ( 0 .. $#{ $GetParam{DynamicField}{"DynamicField_$DynamicFieldConfig->{Name}"} } ) {
+                    my $DataValues = $DynFieldStates{Fields}{$Name}{NotACLReducible}
+                        ? $GetParam{DynamicField}{"DynamicField_$DynamicFieldConfig->{Name}"}[$i]
+                        :
+                        (
+                            $DynamicFieldBackendObject->BuildSelectionDataGet(
+                                DynamicFieldConfig => $DynamicFieldConfig,
+                                PossibleValues     => $DynFieldStates{Fields}{$Name}{PossibleValues},
+                                Value              => [ $GetParam{DynamicField}{"DynamicField_$DynamicFieldConfig->{Name}"}[$i] ],
+                            )
+                            || $DynFieldStates{Fields}{$Name}{PossibleValues}
+                        );
+
+                    # add dynamic field to the list of fields to update
+                    push @DynamicFieldAJAX, {
+                        Name        => 'DynamicField_' . $DynamicFieldConfig->{Name} . "_$i",
+                        Data        => $DataValues,
+                        SelectedID  => $GetParam{DynamicField}{"DynamicField_$DynamicFieldConfig->{Name}"}[$i],
+                        Translation => $DynamicFieldConfig->{Config}->{TranslatableValues} || 0,
+                        Max         => 100,
+                    };
+                }
+
+                next DYNAMICFIELD;
+            }
+
+            my $DataValues = $DynFieldStates{Fields}{$Name}{NotACLReducible}
                 ? $GetParam{DynamicField}{"DynamicField_$DynamicFieldConfig->{Name}"}
                 :
                 (
                     $DynamicFieldBackendObject->BuildSelectionDataGet(
                         DynamicFieldConfig => $DynamicFieldConfig,
-                        PossibleValues     => $DynFieldStates{Fields}{$Index}{PossibleValues},
+                        PossibleValues     => $DynFieldStates{Fields}{$Name}{PossibleValues},
                         Value              => $GetParam{DynamicField}{"DynamicField_$DynamicFieldConfig->{Name}"},
                     )
-                    || $DynFieldStates{Fields}{$Index}{PossibleValues}
+                    || $DynFieldStates{Fields}{$Name}{PossibleValues}
                 );
 
             # add dynamic field to the list of fields to update
@@ -1620,6 +1744,63 @@ sub Run {
                 Translation => $DynamicFieldConfig->{Config}->{TranslatableValues} || 0,
                 Max         => 100,
             };
+        }
+
+        for my $SetField ( values $DynFieldStates{Sets}->%* ) {
+            my $DynamicFieldConfig = $SetField->{DynamicFieldConfig};
+
+            # the frontend name is the name of the inner field including its index or the '_Template' suffix
+            DYNAMICFIELD:
+            for my $FrontendName ( keys $SetField->{FieldStates}->%* ) {
+
+                if ( $DynamicFieldConfig->{Config}{MultiValue} && ref $SetField->{Values}{$FrontendName} eq 'ARRAY' ) {
+                    for my $i ( 0 .. $#{ $SetField->{Values}{$FrontendName} } ) {
+                        my $DataValues = $SetField->{FieldStates}{$FrontendName}{NotACLReducible}
+                            ? $SetField->{Values}{$FrontendName}[$i]
+                            :
+                            (
+                                $DynamicFieldBackendObject->BuildSelectionDataGet(
+                                    DynamicFieldConfig => $DynamicFieldConfig,
+                                    PossibleValues     => $SetField->{FieldStates}{$FrontendName}{PossibleValues},
+                                    Value              => [ $SetField->{Values}{$FrontendName}[$i] ],
+                                )
+                                || $SetField->{FieldStates}{$FrontendName}{PossibleValues}
+                            );
+
+                        # add dynamic field to the list of fields to update
+                        push @DynamicFieldAJAX, {
+                            Name        => 'DynamicField_' . $FrontendName . "_$i",
+                            Data        => $DataValues,
+                            SelectedID  => $SetField->{Values}{$FrontendName}[$i],
+                            Translation => $DynamicFieldConfig->{Config}->{TranslatableValues} || 0,
+                            Max         => 100,
+                        };
+                    }
+
+                    next DYNAMICFIELD;
+                }
+
+                my $DataValues = $SetField->{FieldStates}{$FrontendName}{NotACLReducible}
+                    ? $SetField->{Values}{$FrontendName}
+                    :
+                    (
+                        $DynamicFieldBackendObject->BuildSelectionDataGet(
+                            DynamicFieldConfig => $DynamicFieldConfig,
+                            PossibleValues     => $SetField->{FieldStates}{$FrontendName}{PossibleValues},
+                            Value              => $SetField->{Values}{$FrontendName},
+                        )
+                        || $SetField->{FieldStates}{$FrontendName}{PossibleValues}
+                    );
+
+                # add dynamic field to the list of fields to update
+                push @DynamicFieldAJAX, {
+                    Name        => 'DynamicField_' . $FrontendName,
+                    Data        => $DataValues,
+                    SelectedID  => $SetField->{Values}{$FrontendName},
+                    Translation => $DynamicFieldConfig->{Config}->{TranslatableValues} || 0,
+                    Max         => 100,
+                };
+            }
         }
 
         if ( IsHashRefWithData( $DynFieldStates{Visibility} ) ) {
@@ -2177,6 +2358,9 @@ sub Run {
         my %DynFieldStates = (
             Visibility => {},
             Fields     => {},
+# Rother OSS / HideShowInAgentTicketCompose
+            Sets       => {},
+# EO HideShowInAgentTicketCompose
         );
 
         my $InitialRun = 1;
@@ -2291,7 +2475,7 @@ sub Run {
                 # get values and visibility of dynamic fields
                 %CurFieldStates = $FieldRestrictionsObject->GetFieldStates(
                     TicketObject              => $TicketObject,
-                    DynamicFields             => $DynamicField,
+                    DynamicFields             => $Self->{DynamicField},
                     DynamicFieldBackendObject => $DynamicFieldBackendObject,
                     ChangedElements           => \%ChangedElements,             # optional to reduce ACL evaluation
                     Action                    => $Self->{Action},
@@ -2314,6 +2498,10 @@ sub Run {
                     %{ $DynFieldStates{Visibility} },
                     %{ $CurFieldStates{Visibility} },
                 };
+                $DynFieldStates{Sets} = {
+                    %{ $DynFieldStates{Sets} },
+                    %{ $CurFieldStates{Sets} },
+                };
 
                 # store new values
                 $GetParam{DynamicField} = {
@@ -2334,75 +2522,12 @@ sub Run {
             $InitialRun = 0;
         }
 
-        # EO HideShowInAgentTicketCompose
-
-        # create html strings for all dynamic fields
-        my %DynamicFieldHTML;
-
-        # cycle trough the activated Dynamic Fields for this screen
-        DYNAMICFIELD:
-
-        # Rother OSS / HideShowInAgentTicketCompose
-        #         for my $DynamicFieldConfig ( @{$DynamicField} ) {
-        #             next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
-        for my $i ( 0 .. $#{$DynamicField} ) {
-            next DYNAMICFIELD if !IsHashRefWithData( $DynamicField->[$i] );
-
-            my $DynamicFieldConfig = $DynamicField->[$i];
-
-            # EO HideShowInAgentTicketCompose
-
-            my $PossibleValuesFilter;
-
-            # Rother OSS / HideShowInAgentTicketCompose
-            # don't set a default value for hidden fields
-            my %UseDefault = ();
-            if (
-                !$DynFieldStates{Visibility}{"DynamicField_$DynamicFieldConfig->{Name}"}
-                && ( $DynamicFieldConfig->{FieldType} ne 'Date' || $DynamicFieldConfig->{FieldType} ne 'DateTime' )
-                )
-            {
-                %UseDefault = (
-                    UseDefaultValue      => 0,
-                    OverridePossibleNone => 1,
-                );
-            }
+        my %DynamicFieldPossibleValues = map {
+            'DynamicField_' . $_ => defined $DynFieldStates{Fields}{$_}
+                ? $DynFieldStates{Fields}{$_}{PossibleValues}
+                : undef
+        } ( keys $Self->{DynamicField}->%* );
 # EO HideShowInAgentTicketCompose
-
-            # to store dynamic field value from database (or undefined)
-            my $Value;
-
-            # only get values for Ticket fields (all screens based on AgentTicketActionCommon
-            # generate a new article, then article fields will be always empty at the beginign)
-            if ( $DynamicFieldConfig->{ObjectType} eq 'Ticket' ) {
-
-                # get value stored on the database from Ticket
-                $Value = $Ticket{ 'DynamicField_' . $DynamicFieldConfig->{Name} };
-            }
-
-            # get field html
-            $DynamicFieldHTML{ $DynamicFieldConfig->{Name} } =
-                $DynamicFieldBackendObject->EditFieldRender(
-                    DynamicFieldConfig   => $DynamicFieldConfig,
-# Rother OSS / HideShowInAgentTicketCompose
-#                     PossibleValuesFilter => $PossibleValuesFilter,
-                    PossibleValuesFilter => defined $DynFieldStates{Fields}{$i}
-                    ? $DynFieldStates{Fields}{$i}{PossibleValues}
-                    : undef,
-# EO HideShowInAgentTicketCompose
-                    Value                => $Value,
-                    Mandatory            =>
-                    $Config->{DynamicField}->{ $DynamicFieldConfig->{Name} } == 2,
-                    LayoutObject    => $LayoutObject,
-                    ParamObject     => $ParamObject,
-                    AJAXUpdate      => 1,
-                    UpdatableFields => $Self->_GetFieldsToUpdate(),
-# Rother OSS / HideShowInAgentTicketCompose
-                    %UseDefault,
-# EO HideShowInAgentTicketCompose
-                );
-        }
-
         # build references if exist
         my $References = ( $Data{MessageID} || '' ) . ( $Data{References} || '' );
 
@@ -2468,7 +2593,7 @@ sub Run {
             InReplyTo        => $Data{MessageID},
             References       => "$References",
             TicketBackType   => $TicketBackType,
-            DynamicFieldHTML => \%DynamicFieldHTML,
+            DFPossibleValues => \%DynamicFieldPossibleValues,
 # Rother OSS / HideShowInAgentTicketCompose
             Visibility => $DynFieldStates{Visibility},
 # EO HideShowInAgentTicketCompose
@@ -2776,25 +2901,36 @@ sub _Mask {
 
     # render dynamic fields
     {
-        my %DynamicFieldConfigs = map { $_->{Name} => $_ } $Self->{DynamicField}->@*;
+# Rother OSS / HideShowInAgentTicketCompose
+#         my %DynamicFieldConfigs = map { $_->{Name} => $_ } $Self->{DynamicField}->@*;
+# 
+#         # grep dynamic field values from ticket data
+#         my %DynamicFieldValues
+#             = map { 'DynamicField_' . $_ => $Param{ 'DynamicField_' . $_ } } grep { $DynamicFieldConfigs{$_}->{ObjectType} eq 'Ticket' } keys %DynamicFieldConfigs;
+# EO HideShowInAgentTicketCompose
 
-        # grep dynamic field values from ticket data
-        my %DynamicFieldValues
-            = map { 'DynamicField_' . $_ => $Param{ 'DynamicField_' . $_ } } grep { $DynamicFieldConfigs{$_}->{ObjectType} eq 'Ticket' } keys %DynamicFieldConfigs;
-
+        use Data::Dx;
+        Dx $Self->{DynamicField};
+        Dx $Param{DynamicField};
         $Param{DynamicFieldHTML} = $Kernel::OM->Get('Kernel::Output::HTML::DynamicField::Mask')->EditSectionRender(
             Content              => $Self->{MaskDefinition},
-            DynamicFields        => \%DynamicFieldConfigs,
+# Rother OSS / HideShowInAgentTicketCompose
+#             DynamicFields        => \%DynamicFieldConfigs,
+            DynamicFields        => $Self->{DynamicField},
+# EO HideShowInAgentTicketCompose
             LayoutObject         => $LayoutObject,
             ParamObject          => $Kernel::OM->Get('Kernel::System::Web::Request'),
-            DynamicFieldValues   => \%DynamicFieldValues,
+            DynamicFieldValues   => $Param{DynamicField},
             PossibleValuesFilter => $Param{DFPossibleValues},
             Errors               => $Param{DFErrors},
             Object               => {
                 CustomerID     => $Param{CustomerID},
                 CustomerUserID => $Param{CustomerUserID},
                 UserID         => $Self->{UserID},
-                %DynamicFieldValues,
+# Rother OSS / HideShowInAgentTicketCompose
+#                 %DynamicFieldValues,
+                $Param{DynamicField}->%*,
+# EO HideShowInAgentTicketCompose
             },
         );
 
