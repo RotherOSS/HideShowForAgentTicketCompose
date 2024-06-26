@@ -982,10 +982,10 @@ sub Run {
                 TicketBackType      => $TicketBackType,
                 %Ticket,
                 DynamicFieldHTML => \%DynamicFieldHTML,
+                %GetParam,
 # Rother OSS / HideShowInAgentTicketCompose
                 Visibility       => \%Visibility,
 # EO HideShowInAgentTicketCompose
-                %GetParam,
             );
             $Output .= $LayoutObject->Footer(
                 Type => 'Small',
