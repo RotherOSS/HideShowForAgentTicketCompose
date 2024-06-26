@@ -1121,12 +1121,12 @@ sub Run {
                 GetParam            => \%GetParam,
                 TicketBackType      => $TicketBackType,
                 %Ticket,
-# Rother OSS / HideShowInAgentTicketCompose
-                Visibility => \%Visibility,
-# EO HideShowInAgentTicketCompose
                 %GetParam,
                 DFPossibleValues => \%DynamicFieldPossibleValues,
                 DFErrors         => \%DynamicFieldValidationResult,
+# Rother OSS / HideShowInAgentTicketCompose
+                Visibility => \%Visibility,
+# EO HideShowInAgentTicketCompose
             );
             $Output .= $LayoutObject->Footer(
                 Type => 'Small',
