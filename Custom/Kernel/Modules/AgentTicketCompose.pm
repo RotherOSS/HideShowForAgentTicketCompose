@@ -983,7 +983,7 @@ sub Run {
                 %Ticket,
                 DynamicFieldHTML => \%DynamicFieldHTML,
 # Rother OSS / HideShowInAgentTicketCompose
-                Visibility => \%Visibility,
+                Visibility       => \%Visibility,
 # EO HideShowInAgentTicketCompose
                 %GetParam,
             );
@@ -1457,13 +1457,6 @@ sub Run {
                         $NewChangedElements{StateID} = 1;
                         $ChangedStdFields{StateID}   = 1;
                     }
-                }
-
-                if ( !%NewChangedElements ) {
-                    $Convergence{StdFields} = 1;
-                }
-                else {
-                    %ChangedElements = %NewChangedElements;
                 }
 
                 if ( !%NewChangedElements ) {
@@ -2280,8 +2273,7 @@ sub Run {
 
             $InitialRun = 0;
         }
-
-        # EO HideShowInAgentTicketCompose
+# EO HideShowInAgentTicketCompose
 
         # create html strings for all dynamic fields
         my %DynamicFieldHTML;
@@ -2289,19 +2281,16 @@ sub Run {
         # cycle trough the activated Dynamic Fields for this screen
         DYNAMICFIELD:
 
-        # Rother OSS / HideShowInAgentTicketCompose
-        #         for my $DynamicFieldConfig ( @{$DynamicField} ) {
-        #             next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
+# Rother OSS / HideShowInAgentTicketCompose
+#         for my $DynamicFieldConfig ( @{$DynamicField} ) {
+#             next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
+#
+#             my $PossibleValuesFilter;
         for my $i ( 0 .. $#{$DynamicField} ) {
             next DYNAMICFIELD if !IsHashRefWithData( $DynamicField->[$i] );
 
             my $DynamicFieldConfig = $DynamicField->[$i];
 
-            # EO HideShowInAgentTicketCompose
-
-            my $PossibleValuesFilter;
-
-            # Rother OSS / HideShowInAgentTicketCompose
             # don't set a default value for hidden fields
             my %UseDefault = ();
             if (
@@ -2772,6 +2761,9 @@ sub _Mask {
                 Name  => $DynamicFieldConfig->{Name},
                 Label => $DynamicFieldHTML->{Label},
                 Field => $DynamicFieldHTML->{Field},
+# Rother OSS / HideShowInAgentTicketCompose
+                %Hidden,
+# EO HideShowInAgentTicketCompose
             },
         );
     }

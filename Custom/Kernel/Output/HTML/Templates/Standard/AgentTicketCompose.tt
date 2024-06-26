@@ -376,18 +376,11 @@
                     </div>
                     <div class="Clear"></div>
 [% RenderBlockEnd("IsVisibleForCustomer") %]
-# Rother OSS / HideShowInAgentTicketCompose
-# [% RenderBlockStart("DynamicField") %]
-#                     <div class="Row Row_DynamicField_[% Data.Name | html %]">
-#                         [% Data.Label %]
-#                         <div class="Field">
-#                             [% Data.Field %]
-#                         </div>
-#                         <div class="Clear"></div>
-#                     </div>
-# [% RenderBlockEnd("DynamicField") %]
 [% RenderBlockStart("DynamicField") %]
+# Rother OSS / HideShowInAgentTicketCompose
+#                     <div class="Row Row_DynamicField_[% Data.Name | html %]">
                     <div class="Row Row_DynamicField_[% Data.Name | html %][% Data.HiddenClass | html %]" [% Data.HiddenStyle | html %]>
+# EO HideShowInAgentTicketCompose
                         [% Data.Label %]
                         <div class="Field">
                             [% Data.Field %]
@@ -395,13 +388,15 @@
                         <div class="Clear"></div>
                     </div>
 [% RenderBlockEnd("DynamicField") %]
-# EO HideShowInAgentTicketCompose
 
 # example of how to use fixed dynamic field blocks for customizations
 # Note: Field1 and Field2 are the names of the fields and had to be replaced with the actual
 # field names
 #[% RenderBlockStart("DynamicField_Field1") %]
-#                    <div class="Row Row_DynamicField_[% Data.Name | html %]">
+# Rother OSS / HideShowInAgentTicketCompose
+# #                    <div class="Row Row_DynamicField_[% Data.Name | html %]">
+#                    <div class="Row Row_DynamicField_[% Data.Name | html %][% Data.HiddenClass | html %]" [% Data.HiddenStyle | html %]>
+# EO HideShowInAgentTicketCompose
 #                        [% Data.Label %]
 #                        <div class="Field">
 #                            [% Data.Field %]
@@ -410,7 +405,10 @@
 #                    </div>
 #[% RenderBlockEnd("DynamicField_Field1") %]
 #[% RenderBlockStart("DynamicField_Field2") %]
-#                    <div class="Row Row_DynamicField_[% Data.Name | html %]">
+# Rother OSS / HideShowInAgentTicketCompose
+# #                    <div class="Row Row_DynamicField_[% Data.Name | html %]">
+#                    <div class="Row Row_DynamicField_[% Data.Name | html %][% Data.HiddenClass | html %]" [% Data.HiddenStyle | html %]>
+# EO HideShowInAgentTicketCompose
 #                        [% Data.Label %]
 #                        <div class="Field">
 #                            [% Data.Field %]
