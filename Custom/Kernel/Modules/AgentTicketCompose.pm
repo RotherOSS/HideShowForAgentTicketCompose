@@ -1125,7 +1125,8 @@ sub Run {
                 DFPossibleValues => \%DynamicFieldPossibleValues,
                 DFErrors         => \%DynamicFieldValidationResult,
 # Rother OSS / HideShowInAgentTicketCompose
-                Visibility => \%Visibility,
+                DynamicField => $GetParam{DynamicField},
+                Visibility   => \%Visibility,
 # EO HideShowInAgentTicketCompose
             );
             $Output .= $LayoutObject->Footer(
@@ -2601,7 +2602,8 @@ sub Run {
             TicketBackType   => $TicketBackType,
             DFPossibleValues => \%DynamicFieldPossibleValues,
 # Rother OSS / HideShowInAgentTicketCompose
-            Visibility => $DynFieldStates{Visibility},
+            DynamicField => $GetParam{DynamicField},
+            Visibility   => $DynFieldStates{Visibility},
 # EO HideShowInAgentTicketCompose
         );
         $Output .= $LayoutObject->Footer(
@@ -2920,6 +2922,7 @@ sub _Mask {
 # Rother OSS / HideShowInAgentTicketCompose
 #             DynamicFields        => \%DynamicFieldConfigs,
             DynamicFields        => $Self->{DynamicField},
+            Visibility           => $Param{Visibility},
 # EO HideShowInAgentTicketCompose
             LayoutObject         => $LayoutObject,
             ParamObject          => $Kernel::OM->Get('Kernel::System::Web::Request'),
