@@ -2356,6 +2356,20 @@ sub Run {
 
         my $InitialRun = 1;
 
+        # handle default values for standard fields
+        if ( $Config->{StateDefault} ) {
+
+            my $NextStates = $Self->_GetNextStates(
+                %GetParam,
+            );
+
+            $GetParam{StateID} //= { reverse $NextStates->%* }->{ $Config->{StateDefault} };
+        }
+        if ( $Config->{IsVisibleForCustomerDefault} ) {
+
+            $GetParam{IsVisibleForCustomer} //= $Config->{IsVisibleForCustomerDefault};
+        }
+
         until ( $Convergence{Fields} ) {
 
             # determine standard field input
