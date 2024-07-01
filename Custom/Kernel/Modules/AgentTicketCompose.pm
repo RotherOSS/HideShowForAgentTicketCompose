@@ -1027,11 +1027,11 @@ sub Run {
 #                 DynamicFieldConfig   => $DynamicFieldConfig,
 #                 PossibleValuesFilter => $PossibleValuesFilter,
 #                 ParamObject          => $ParamObject,
-# 
+#
 #                 # Mandatory is added to the configs by $Self->new
 #                 Mandatory => $DynamicFieldConfig->{Mandatory},
 #             );
-# 
+#
 #             if ( !IsHashRefWithData($ValidationResult) ) {
 #                 return $LayoutObject->ErrorScreen(
 #                     Message => $LayoutObject->{LanguageObject}->Translate(
@@ -1041,13 +1041,13 @@ sub Run {
 #                     Comment => Translatable('Please contact the administrator.'),
 #                 );
 #             }
-# 
+#
 #             # propagate validation error to the Error variable to be detected by the frontend
 #             if ( $ValidationResult->{ServerError} ) {
 #                 $Error{ $DynamicFieldConfig->{Name} }                        = ' ServerError';
 #                 $DynamicFieldValidationResult{ $DynamicFieldConfig->{Name} } = $ValidationResult;
 #             }
-# 
+#
 #         }
             my $ValidationResult;
 
@@ -1437,21 +1437,21 @@ sub Run {
 #         DYNAMICFIELD:
 #         for my $DynamicFieldConfig ( @{ $Self->{DynamicField} } ) {
 #             next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
-# 
+#
 #             my $IsACLReducible = $DynamicFieldBackendObject->HasBehavior(
 #                 DynamicFieldConfig => $DynamicFieldConfig,
 #                 Behavior           => 'IsACLReducible',
 #             );
 #             next DYNAMICFIELD if !$IsACLReducible;
-# 
+#
 #             my $PossibleValues = $DynamicFieldBackendObject->PossibleValuesGet(
 #                 DynamicFieldConfig => $DynamicFieldConfig,
 #             );
-# 
+#
 #             # convert possible values key => value to key => key for ACLs using a Hash slice
 #             my %AclData = %{$PossibleValues};
 #             @AclData{ keys %AclData } = keys %AclData;
-# 
+#
 #             # set possible values filter from ACLs
 #             my $ACL = $TicketObject->TicketAcl(
 #                 %GetParam,
@@ -1465,17 +1465,17 @@ sub Run {
 #             );
 #             if ($ACL) {
 #                 my %Filter = $TicketObject->TicketAclData();
-# 
+#
 #                 # convert Filer key => key back to key => value using map
 #                 %{$PossibleValues} = map { $_ => $PossibleValues->{$_} } keys %Filter;
 #             }
-# 
+#
 #             my $DataValues = $DynamicFieldBackendObject->BuildSelectionDataGet(
 #                 DynamicFieldConfig => $DynamicFieldConfig,
 #                 PossibleValues     => $PossibleValues,
 #                 Value              => $DynamicFieldValues{ $DynamicFieldConfig->{Name} },
 #             ) || $PossibleValues;
-# 
+#
 #             # add dynamic field to the list of fields to update
 #             push(
 #                 @DynamicFieldAJAX,
@@ -1489,6 +1489,9 @@ sub Run {
 #             );
 #         }
         my $ElementChanged = $ParamObject->GetParam( Param => 'ElementChanged' ) || '';
+        if ( $ElementChanged eq 'StateID' ) {
+            $ElementChanged = 'NextStateID';
+        }
 
         # get list type
         my $TreeView = 0;
@@ -1536,15 +1539,7 @@ sub Run {
 
                 # which standard fields to check - FieldID => GetParamValue (neccessary for Dest)
                 my %Check = (
-                    Dest               => 'QueueID',
-                    NewUserID          => 'NewUserID',
-                    NewResponsibleID   => 'NewResponsibleID',
-                    NextStateID        => 'NextStateID',
-                    PriorityID         => 'PriorityID',
-                    ServiceID          => 'ServiceID',
-                    SLAID              => 'SLAID',
-                    StandardTemplateID => 'StandardTemplateID',
-                    TypeID             => 'TypeID',
+                    NextStateID => 'NextStateID',
                 );
                 if ($ACLPreselection) {
                     FIELD:
@@ -1590,19 +1585,19 @@ sub Run {
                 if ( $GetParam{StateID} && !$NextStates->{ $GetParam{StateID} } ) {
 
                     # if not empty the field
-                    $GetParam{StateID}           = '';
-                    $NewChangedElements{StateID} = 1;
-                    $ChangedStdFields{StateID}   = 1;
+                    $GetParam{StateID}               = '';
+                    $NewChangedElements{NextStateID} = 1;
+                    $ChangedStdFields{NextStateID}   = 1;
                 }
 
                 # autoselect
-                elsif ( !$GetParam{StateID} && $Autoselect && $Autoselect->{StateID} ) {
+                elsif ( !$GetParam{StateID} && $Autoselect && $Autoselect->{NextStateID} ) {
                     $GetParam{StateID} = $FieldRestrictionsObject->Autoselect(
                         PossibleValues => $NextStates,
                     ) || '';
                     if ( $GetParam{StateID} ) {
-                        $NewChangedElements{StateID} = 1;
-                        $ChangedStdFields{StateID}   = 1;
+                        $NewChangedElements{NextStateID} = 1;
+                        $ChangedStdFields{NextStateID}   = 1;
                     }
                 }
 
@@ -1647,7 +1642,8 @@ sub Run {
                     CustomerUser              => $Selected || '',
                     GetParam                  => {
                         %GetParam,
-                        OwnerID => $GetParam{NewUserID},
+                        NextStateID => $GetParam{StateID},
+                        StateID     => undef,
                     },
                     Autoselect      => $Autoselect,
                     ACLPreselection => $ACLPreselection,
@@ -2311,6 +2307,12 @@ sub Run {
         my $HideAutoselectedJSON;
         if ($Autoselect) {
             my @HideAutoselected = grep { !ref( $Autoselect->{$_} ) && $Autoselect->{$_} == 2 } keys %{$Autoselect};
+            AUTOSELECT:
+            for my $Item (@HideAutoselected) {
+                next AUTOSELECT if $Item ne 'NextStateID';
+                $Item = 'StateID';
+                last AUTOSELECT;
+            }
             if ( $Autoselect->{DynamicField} ) {
                 push @HideAutoselected,
                     map { "DynamicField_" . $_ }
@@ -2380,14 +2382,7 @@ sub Run {
 
                 # which standard fields to check - FieldID => GetParamValue (neccessary for Dest)
                 my %Check = (
-                    Dest             => 'QueueID',
-                    NewUserID        => 'NewUserID',
-                    NewResponsibleID => 'NewResponsibleID',
-                    NextStateID      => 'NextStateID',
-                    PriorityID       => 'PriorityID',
-                    ServiceID        => 'ServiceID',
-                    SLAID            => 'SLAID',
-                    TypeID           => 'TypeID',
+                    NextStateID => 'NextStateID',
                 );
                 if ( $ACLPreselection && !$InitialRun ) {
                     FIELD:
@@ -2433,19 +2428,19 @@ sub Run {
                 if ( $GetParam{StateID} && !$NextStates->{ $GetParam{StateID} } ) {
 
                     # if not empty the field
-                    $GetParam{StateID}           = '';
-                    $NewChangedElements{StateID} = 1;
-                    $ChangedStdFields{StateID}   = 1;
+                    $GetParam{StateID}               = '';
+                    $NewChangedElements{NextStateID} = 1;
+                    $ChangedStdFields{NextStateID}   = 1;
                 }
 
                 # autoselect
-                elsif ( !$GetParam{StateID} && $Autoselect && $Autoselect->{StateID} ) {
+                elsif ( !$GetParam{StateID} && $Autoselect && $Autoselect->{NextStateID} ) {
                     $GetParam{StateID} = $FieldRestrictionsObject->Autoselect(
                         PossibleValues => $NextStates,
                     ) || '';
                     if ( $GetParam{StateID} ) {
-                        $NewChangedElements{StateID} = 1;
-                        $ChangedStdFields{StateID}   = 1;
+                        $NewChangedElements{NextStateID} = 1;
+                        $ChangedStdFields{NextStateID}   = 1;
                     }
                 }
 
@@ -2489,10 +2484,14 @@ sub Run {
                     TicketID                  => $Self->{TicketID},
                     FormID                    => $Self->{FormID},
                     CustomerUser              => $Ticket{CustomerUser} || '',
-                    GetParam                  => \%GetParam,
-                    Autoselect                => $Autoselect,
-                    ACLPreselection           => $ACLPreselection,
-                    LoopProtection            => \$LoopProtection,
+                    GetParam                  => {
+                        %GetParam,
+                        NextStateID => $GetParam{StateID},
+                        StateID     => undef,
+                    },
+                    Autoselect      => $Autoselect,
+                    ACLPreselection => $ACLPreselection,
+                    LoopProtection  => \$LoopProtection,
                 );
 
                 # combine FieldStates
@@ -2602,8 +2601,10 @@ sub Run {
             TicketBackType   => $TicketBackType,
             DFPossibleValues => \%DynamicFieldPossibleValues,
 # Rother OSS / HideShowInAgentTicketCompose
-            DynamicField => $GetParam{DynamicField},
-            Visibility   => $DynFieldStates{Visibility},
+            DynamicField     => $GetParam{DynamicField},
+            NextState        => $GetParam{StateID} ? $StdFieldValues{NextStateID}{ $GetParam{StateID} } : '',
+            HideAutoselected => $HideAutoselectedJSON,
+            Visibility       => $DynFieldStates{Visibility},
 # EO HideShowInAgentTicketCompose
         );
         $Output .= $LayoutObject->Footer(
@@ -2632,6 +2633,14 @@ sub _Mask {
     # get needed objects
     my $LayoutObject = $Kernel::OM->Get('Kernel::Output::HTML::Layout');
     my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
+
+    if ( $Param{HideAutoselected} ) {
+
+        # add Autoselect JS
+        $LayoutObject->AddJSOnDocumentComplete(
+            Code => "Core.Form.InitHideAutoselected({ FieldIDs: $Param{HideAutoselected} });",
+        );
+    }
 
     # get config for frontend module
     my $Config = $ConfigObject->Get("Ticket::Frontend::$Self->{Action}");
@@ -2911,7 +2920,7 @@ sub _Mask {
     {
 # Rother OSS / HideShowInAgentTicketCompose
 #         my %DynamicFieldConfigs = map { $_->{Name} => $_ } $Self->{DynamicField}->@*;
-# 
+#
 #         # grep dynamic field values from ticket data
 #         my %DynamicFieldValues
 #             = map { 'DynamicField_' . $_ => $Param{ 'DynamicField_' . $_ } } grep { $DynamicFieldConfigs{$_}->{ObjectType} eq 'Ticket' } keys %DynamicFieldConfigs;
