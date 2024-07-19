@@ -18,9 +18,22 @@
 
 package Kernel::Modules::AgentTicketCompose;
 
+# Rother OSS / HideShowInAgentTicketCompose
+# use strict;
+# use warnings;
+use v5.24;
 use strict;
 use warnings;
+use namespace::autoclean;
+use utf8;
 
+# core modules
+use List::Util qw(any);
+
+# CPAN modules
+
+# OTOBO modules
+# EO HideShowInAgentTicketCompose
 use Kernel::System::VariableCheck qw(:all);
 use Kernel::Language              qw(Translatable);
 use Mail::Address                 ();
@@ -31,18 +44,31 @@ sub new {
     my ( $Type, %Param ) = @_;
 
     # allocate new hash for object
-    my $Self = {%Param};
-    bless( $Self, $Type );
+# Rother OSS / HideShowInAgentTicketCompose
+#     my $Self = {%Param};
+#     bless( $Self, $Type );
+    my $Self = bless {%Param}, $Type;
+
+    my $ParamObject = $Kernel::OM->Get('Kernel::System::Web::Request');
+# EO HideShowInAgentTicketCompose
 
     # Try to load draft if requested.
     if (
         $Kernel::OM->Get('Kernel::Config')->Get("Ticket::Frontend::$Self->{Action}")->{FormDraft}
-        && $Kernel::OM->Get('Kernel::System::Web::Request')->GetParam( Param => 'LoadFormDraft' )
-        && $Kernel::OM->Get('Kernel::System::Web::Request')->GetParam( Param => 'FormDraftID' )
+# Rother OSS / HideShowInAgentTicketCompose
+#         && $Kernel::OM->Get('Kernel::System::Web::Request')->GetParam( Param => 'LoadFormDraft' )
+#         && $Kernel::OM->Get('Kernel::System::Web::Request')->GetParam( Param => 'FormDraftID' )
+        && $ParamObject->GetParam( Param => 'LoadFormDraft' )
+        && $ParamObject->GetParam( Param => 'FormDraftID' )
+# EO HideShowInAgentTicketCompose
         )
     {
-        $Self->{LoadedFormDraftID} = $Kernel::OM->Get('Kernel::System::Web::Request')->LoadFormDraft(
-            FormDraftID => $Kernel::OM->Get('Kernel::System::Web::Request')->GetParam( Param => 'FormDraftID' ),
+# Rother OSS / HideShowInAgentTicketCompose
+#         $Self->{LoadedFormDraftID} = $Kernel::OM->Get('Kernel::System::Web::Request')->LoadFormDraft(
+#             FormDraftID => $Kernel::OM->Get('Kernel::System::Web::Request')->GetParam( Param => 'FormDraftID' ),
+        $Self->{LoadedFormDraftID} = $ParamObject->LoadFormDraft(
+            FormDraftID => $ParamObject->GetParam( Param => 'FormDraftID' ),
+# EO HideShowInAgentTicketCompose
             UserID      => $Self->{UserID},
         );
     }
@@ -61,27 +87,38 @@ sub new {
         FieldFilter => $Config->{DynamicField} || {},
     );
 
-    my $Definition = $Kernel::OM->Get('Kernel::System::Ticket::Mask')->DefinitionGet(
+# Rother OSS / HideShowInAgentTicketCompose
+#     my $Definition = $Kernel::OM->Get('Kernel::System::Ticket::Mask')->DefinitionGet(
+    my $TicketDefinition = $Kernel::OM->Get('Kernel::System::Ticket::Mask')->DefinitionGet(
+# EO HideShowInAgentTicketCompose
         Mask => $Self->{Action},
     ) || {};
 
 # Rother OSS / HideShowInAgentTicketCompose
 #     $Self->{DynamicField}   = [];
-    $Self->{DynamicField}   = {};
+#     $Self->{MaskDefinition} = $Definition->{Mask};
+    $Self->{TicketMaskDefinition} = $TicketDefinition->{Mask};
+    $Self->{DynamicField}         = {};
 # EO HideShowInAgentTicketCompose
-    $Self->{MaskDefinition} = $Definition->{Mask};
 
     # align sysconfig and ticket mask data I
     for my $DynamicField ( @{ $DynamicFieldList // [] } ) {
-        if ( exists $Definition->{DynamicFields}{ $DynamicField->{Name} } ) {
-            my $Parameters = delete $Definition->{DynamicFields}{ $DynamicField->{Name} } // {};
+# Rother OSS / HideShowInAgentTicketCompose
+#         if ( exists $Definition->{DynamicFields}{ $DynamicField->{Name} } ) {
+#             my $Parameters = delete $Definition->{DynamicFields}{ $DynamicField->{Name} } // {};
+        if ( exists $TicketDefinition->{DynamicFields}{ $DynamicField->{Name} } ) {
+            my $Parameters = delete $TicketDefinition->{DynamicFields}{ $DynamicField->{Name} } // {};
+# EO HideShowInAgentTicketCompose
 
             for my $Attribute ( keys $Parameters->%* ) {
                 $DynamicField->{$Attribute} = $Parameters->{$Attribute};
             }
         }
         else {
-            push $Self->{MaskDefinition}->@*, {
+# Rother OSS / HideShowInAgentTicketCompose
+#             push $Self->{MaskDefinition}->@*, {
+            push $Self->{TicketMaskDefinition}->@*, {
+# EO HideShowInAgentTicketCompose
                 DF        => $DynamicField->{Name},
                 Mandatory => $Config->{DynamicField}{ $DynamicField->{Name} } == 2 ? 1 : 0,
             };
@@ -98,15 +135,19 @@ sub new {
     }
 
     # align sysconfig and ticket mask data II
-    for my $DynamicFieldName ( keys $Definition->{DynamicFields}->%* ) {
 # Rother OSS / HideShowInAgentTicketCompose
+#     for my $DynamicFieldName ( keys $Definition->{DynamicFields}->%* ) {
 #         push $Self->{DynamicField}->@*, $DynamicFieldObject->DynamicFieldGet(
-        $Self->{DynamicField}{ $DynamicFieldName } = $DynamicFieldObject->DynamicFieldGet(
+    for my $DynamicFieldName ( keys $TicketDefinition->{DynamicFields}->%* ) {
+        $Self->{DynamicField}{$DynamicFieldName} = $DynamicFieldObject->DynamicFieldGet(
 # EO HideShowInAgentTicketCompose
             Name => $DynamicFieldName,
         );
 
-        my $Parameters = $Definition->{DynamicFields}{$DynamicFieldName} // {};
+# Rother OSS / HideShowInAgentTicketCompose
+#         my $Parameters = $Definition->{DynamicFields}{$DynamicFieldName} // {};
+        my $Parameters = $TicketDefinition->{DynamicFields}{$DynamicFieldName} // {};
+# EO HideShowInAgentTicketCompose
 
         for my $Attribute ( keys $Parameters->%* ) {
 # Rother OSS / HideShowInAgentTicketCompose
@@ -118,18 +159,45 @@ sub new {
 
     # get form id
     $Self->{FormID} = $Kernel::OM->Get('Kernel::System::Web::FormCache')->PrepareFormID(
-        ParamObject  => $Kernel::OM->Get('Kernel::System::Web::Request'),
+# Rother OSS / HideShowInAgentTicketCompose
+#         ParamObject  => $Kernel::OM->Get('Kernel::System::Web::Request'),
+        ParamObject  => $ParamObject,
+# EO HideShowInAgentTicketCompose
         LayoutObject => $Kernel::OM->Get('Kernel::Output::HTML::Layout'),
     );
 
+# Rother OSS / HideShowInAgentTicketCompose
+    # methods which are used to determine the possible values of the standard fields
+    $Self->{FieldMethods} = [
+        {
+            FieldID => 'NextStateID',
+            Method  => \&_GetNextStates
+        },
+    ];
+
+    # dependancies of standard fields which are not defined via ACLs
+    $Self->{InternalDependancy} = {
+    };
+
+# EO HideShowInAgentTicketCompose
     return $Self;
 }
 
 sub Run {
     my ( $Self, %Param ) = @_;
 
-    # get layout object
-    my $LayoutObject = $Kernel::OM->Get('Kernel::Output::HTML::Layout');
+# Rother OSS / HideShowInAgentTicketCompose
+#     # get layout object
+#     my $LayoutObject = $Kernel::OM->Get('Kernel::Output::HTML::Layout');
+    # get needed objects
+    my $LayoutObject            = $Kernel::OM->Get('Kernel::Output::HTML::Layout');
+    my $TicketObject            = $Kernel::OM->Get('Kernel::System::Ticket');
+    my $ConfigObject            = $Kernel::OM->Get('Kernel::Config');
+    my $ParamObject             = $Kernel::OM->Get('Kernel::System::Web::Request');
+    my $FieldRestrictionsObject = $Kernel::OM->Get('Kernel::System::Ticket::FieldRestrictions');
+    my $ArticleObject           = $Kernel::OM->Get('Kernel::System::Ticket::Article');
+    my $MainObject              = $Kernel::OM->Get('Kernel::System::Main');
+# EO HideShowInAgentTicketCompose
 
     # check needed stuff
     if ( !$Self->{TicketID} ) {
@@ -139,17 +207,17 @@ sub Run {
         );
     }
 
-    # get needed objects
-    my $ConfigObject  = $Kernel::OM->Get('Kernel::Config');
-    my $TicketObject  = $Kernel::OM->Get('Kernel::System::Ticket');
-    my $ArticleObject = $Kernel::OM->Get('Kernel::System::Ticket::Article');
 # Rother OSS / HideShowInAgentTicketCompose
-    my $FieldRestrictionsObject = $Kernel::OM->Get('Kernel::System::Ticket::FieldRestrictions');
+#     # get needed objects
+#     my $ConfigObject  = $Kernel::OM->Get('Kernel::Config');
+#     my $TicketObject  = $Kernel::OM->Get('Kernel::System::Ticket');
+#     my $ArticleObject = $Kernel::OM->Get('Kernel::System::Ticket::Article');
+#
+#     my $ArticleBackendObject = $ArticleObject->BackendForChannel( ChannelName => 'Email' );
+#
+#     # get config for frontend module
+    # get config of frontend module
 # EO HideShowInAgentTicketCompose
-
-    my $ArticleBackendObject = $ArticleObject->BackendForChannel( ChannelName => 'Email' );
-
-    # get config for frontend module
     my $Config = $ConfigObject->Get("Ticket::Frontend::$Self->{Action}");
 
     # check permissions
@@ -193,7 +261,10 @@ sub Run {
 
     # Check for failed draft loading request.
     if (
-        $Kernel::OM->Get('Kernel::System::Web::Request')->GetParam( Param => 'LoadFormDraft' )
+# Rother OSS / HideShowInAgentTicketCompose
+#         $Kernel::OM->Get('Kernel::System::Web::Request')->GetParam( Param => 'LoadFormDraft' )
+        $ParamObject->GetParam( Param => 'LoadFormDraft' )
+# EO HideShowInAgentTicketCompose
         && !$Self->{LoadedFormDraftID}
         )
     {
@@ -205,7 +276,10 @@ sub Run {
 
     my %Ticket = $TicketObject->TicketGet(
         TicketID      => $Self->{TicketID},
-        DynamicFields => 1
+# Rother OSS / HideShowInAgentTicketCompose
+#         DynamicFields => 1
+        DynamicFields => 1,
+# EO HideShowInAgentTicketCompose
     );
 
     # get lock state
@@ -262,8 +336,11 @@ sub Run {
         }
     }
 
-    # get param object
-    my $ParamObject = $Kernel::OM->Get('Kernel::System::Web::Request');
+# Rother OSS / HideShowInAgentTicketCompose
+#     # get param object
+#     my $ParamObject = $Kernel::OM->Get('Kernel::System::Web::Request');
+    my $ArticleBackendObject = $ArticleObject->BackendForChannel( ChannelName => 'Email' );
+# EO HideShowInAgentTicketCompose
 
     # get params
     my %GetParam;
@@ -482,39 +559,71 @@ sub Run {
         }
     }
 
-    # get Dynamic fields form ParamObject
-    my %DynamicFieldValues;
+# Rother OSS / HideShowInAgentTicketCompose
+#     # get Dynamic fields form ParamObject
+#     my %DynamicFieldValues;
+#
+#     # get backend object
+#     my $DynamicFieldBackendObject = $Kernel::OM->Get('Kernel::System::DynamicField::Backend');
+#
+#     # cycle trough the activated Dynamic Fields for this screen
+#     DYNAMICFIELD:
+#     for my $DynamicFieldConfig ( @{ $Self->{DynamicField} } ) {
+#         next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
+#
+#         # extract the dynamic field value from the web request
+#         $DynamicFieldValues{ $DynamicFieldConfig->{Name} } =
+#             $DynamicFieldBackendObject->EditFieldValueGet(
+#                 DynamicFieldConfig => $DynamicFieldConfig,
+#                 ParamObject        => $ParamObject,
+#                 LayoutObject       => $LayoutObject,
+#             );
+#     }
+    # ACL compatibility translation
+    my %ACLCompatGetParam = (
+        StateID => $GetParam{NewStateID},
+    );
 
-    # get backend object
+    # get dynamic field backend object
     my $DynamicFieldBackendObject = $Kernel::OM->Get('Kernel::System::DynamicField::Backend');
 
-    # cycle trough the activated Dynamic Fields for this screen
+    # extract the dynamic field value from the web request
+    my %DynamicFieldValues;
     DYNAMICFIELD:
-# Rother OSS / HideShowInAgentTicketCompose
-#     for my $DynamicFieldConfig ( @{ $Self->{DynamicField} } ) {
     for my $DynamicFieldConfig ( values $Self->{DynamicField}->%* ) {
-# EO HideShowInAgentTicketCompose
-        next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
+        next DYNAMICFIELD unless IsHashRefWithData($DynamicFieldConfig);
 
-        # extract the dynamic field value from the web request
-        $DynamicFieldValues{ $DynamicFieldConfig->{Name} } =
-            $DynamicFieldBackendObject->EditFieldValueGet(
-                DynamicFieldConfig => $DynamicFieldConfig,
-                ParamObject        => $ParamObject,
-                LayoutObject       => $LayoutObject,
-            );
+        $DynamicFieldValues{ $DynamicFieldConfig->{Name} } = $DynamicFieldBackendObject->EditFieldValueGet(
+            DynamicFieldConfig => $DynamicFieldConfig,
+            ParamObject        => $ParamObject,
+            LayoutObject       => $LayoutObject,
+        );
     }
+# EO HideShowInAgentTicketCompose
 
     # convert dynamic field values into a structure for ACLs
-    my %DynamicFieldACLParameters;
-    DYNAMICFIELD:
-    for my $DynamicFieldItem ( sort keys %DynamicFieldValues ) {
-        next DYNAMICFIELD if !$DynamicFieldItem;
-        next DYNAMICFIELD if !defined $DynamicFieldValues{$DynamicFieldItem};
+# Rother OSS / HideShowInAgentTicketCompose
+#     my %DynamicFieldACLParameters;
+#     DYNAMICFIELD:
+#     for my $DynamicFieldItem ( sort keys %DynamicFieldValues ) {
+#         next DYNAMICFIELD if !$DynamicFieldItem;
+#         next DYNAMICFIELD if !defined $DynamicFieldValues{$DynamicFieldItem};
+#
+#         $DynamicFieldACLParameters{ 'DynamicField_' . $DynamicFieldItem } = $DynamicFieldValues{$DynamicFieldItem};
+#     }
+#     $GetParam{DynamicField} = \%DynamicFieldACLParameters;
+    {
+        my %DynamicFieldACLParameters;
+        DYNAMICFIELD:
+        for my $DynamicFieldItem ( sort keys %DynamicFieldValues ) {
+            next DYNAMICFIELD unless $DynamicFieldItem;
+            next DYNAMICFIELD unless defined $DynamicFieldValues{$DynamicFieldItem};
 
-        $DynamicFieldACLParameters{ 'DynamicField_' . $DynamicFieldItem } = $DynamicFieldValues{$DynamicFieldItem};
+            $DynamicFieldACLParameters{ 'DynamicField_' . $DynamicFieldItem } = $DynamicFieldValues{$DynamicFieldItem};
+        }
+        $GetParam{DynamicField} = \%DynamicFieldACLParameters;
     }
-    $GetParam{DynamicField} = \%DynamicFieldACLParameters;
+# EO HideShowInAgentTicketCompose
 
     # transform pending time, time stamp based on user time zone
     if (
@@ -530,9 +639,21 @@ sub Run {
         );
     }
 
-    # get needed objects
+# Rother OSS / HideShowInAgentTicketCompose
+#     # get needed objects
+#     my $UploadCacheObject = $Kernel::OM->Get('Kernel::System::Web::UploadCache');
+#     my $MainObject        = $Kernel::OM->Get('Kernel::System::Main');
+    # rewrap body if no rich text is used
+    if ( $GetParam{Body} && !$LayoutObject->{BrowserRichText} ) {
+        $GetParam{Body} = $LayoutObject->WrapPlainText(
+            MaxCharacters => $ConfigObject->Get('Ticket::Frontend::TextAreaNote'),
+            PlainText     => $GetParam{Body},
+        );
+    }
+
+    # get upload cache object
     my $UploadCacheObject = $Kernel::OM->Get('Kernel::System::Web::UploadCache');
-    my $MainObject        = $Kernel::OM->Get('Kernel::System::Main');
+# EO HideShowInAgentTicketCompose
 
     # send email
     if ( $Self->{Subaction} eq 'SendEmail' || $Self->{LoadedFormDraftID} ) {
@@ -616,7 +737,11 @@ sub Run {
         # Check draft name.
         if (
             $FormDraftAction
-            && ( $FormDraftAction eq 'Add' || $FormDraftAction eq 'Update' )
+# Rother OSS / HideShowInAgentTicketCompose
+#             && ( $FormDraftAction eq 'Add' || $FormDraftAction eq 'Update' )
+            &&
+            ( $FormDraftAction eq 'Add' || $FormDraftAction eq 'Update' )
+# EO HideShowInAgentTicketCompose
             )
         {
             my $Title = $ParamObject->GetParam( Param => 'FormDraftTitle' );
@@ -659,6 +784,7 @@ sub Run {
                         Success      => 0,
                         ErrorMessage => $Kernel::OM->Get('Kernel::Language')->Translate( "FormDraft name %s is already in use!", $Title ),
                     );
+
                     last DRAFT;
                 }
             }
@@ -708,21 +834,29 @@ sub Run {
             }
         }
 
+# Rother OSS / HideShowInAgentTicketCompose
+#         if (%FormDraftResponse) {
+#
+#             # build JSON output
+#             my $JSON = $LayoutObject->JSONEncode(
+#                 Data => \%FormDraftResponse,
+#             );
+#
+#             # send JSON response
+#             return $LayoutObject->Attachment(
+#                 ContentType => 'application/json',
+#                 Content     => $JSON,
+#                 Type        => 'inline',
+#                 NoCache     => 1,
+#             );
+#         }
+        # Return JSON when there already is a response
         if (%FormDraftResponse) {
-
-            # build JSON output
-            my $JSON = $LayoutObject->JSONEncode(
-                Data => \%FormDraftResponse,
-            );
-
-            # send JSON response
-            return $LayoutObject->Attachment(
-                ContentType => 'application/json',
-                Content     => $JSON,
-                Type        => 'inline',
-                NoCache     => 1,
+            return $LayoutObject->JSONReply(
+                Data => \%FormDraftResponse
             );
         }
+# EO HideShowInAgentTicketCompose
 
         # check pending date
         if ( $StateData{TypeName} && $StateData{TypeName} =~ /^pending/i ) {
@@ -860,8 +994,8 @@ sub Run {
                 );
             }
         }
-# Rother OSS / HideShowInAgentTicketCompose
 
+# Rother OSS / HideShowInAgentTicketCompose
         # skip validation of hidden fields
         my %Visibility;
 
@@ -871,14 +1005,13 @@ sub Run {
         # call ticket ACLs for DynamicFields to check field visibility
         my $ACLResult = $TicketObject->TicketAcl(
             %GetParam,
-            CustomerUserID => $Ticket{CustomerUser} || '',
-            Action         => $Self->{Action},
-            ReturnType     => 'Form',
-            ReturnSubType  => '-',
-            Data           => \%DynamicFieldAcl,
-            UserID         => $Self->{UserID},
+            Action        => $Self->{Action},
+            ReturnType    => 'Form',
+            ReturnSubType => '-',
+            Data          => \%DynamicFieldAcl,
+            UserID        => $Self->{UserID},
+            TicketID      => $Self->{TicketID},
         );
-
         if ($ACLResult) {
             %Visibility = map { 'DynamicField_' . $_ => 0 } keys $Self->{DynamicField}->%*;
             my %AclData = $TicketObject->TicketAclData();
@@ -890,86 +1023,10 @@ sub Run {
             %Visibility = map { 'DynamicField_' . $_ => 1 } keys $Self->{DynamicField}->%*;
         }
 
+# EO HideShowInAgentTicketCompose
         # remember dynamic field validation results if erroneous
         my %DynamicFieldValidationResult;
         my %DynamicFieldPossibleValues;
-
-        # cycle through the activated Dynamic Fields for this screen
-        DYNAMICFIELD:
-        for my $DynamicFieldConfig ( values $Self->{DynamicField}->%* ) {
-            next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
-
-            my $PossibleValuesFilter;
-
-            my $IsACLReducible = $DynamicFieldBackendObject->HasBehavior(
-                DynamicFieldConfig => $DynamicFieldConfig,
-                Behavior           => 'IsACLReducible',
-            );
-
-            if ($IsACLReducible) {
-
-                # get PossibleValues
-                my $PossibleValues = $DynamicFieldBackendObject->PossibleValuesGet(
-                    DynamicFieldConfig => $DynamicFieldConfig,
-                );
-
-                # check if field has PossibleValues property in its configuration
-                if ( IsHashRefWithData($PossibleValues) ) {
-
-                    # convert possible values key => value to key => key for ACLs using a Hash slice
-                    my %AclData = %{$PossibleValues};
-                    @AclData{ keys %AclData } = keys %AclData;
-
-                    # set possible values filter from ACLs
-                    my $ACL = $TicketObject->TicketAcl(
-                        %GetParam,
-                        CustomerUserID => $Ticket{CustomerUser} || '',
-                        Action         => $Self->{Action},
-                        ReturnType     => 'Ticket',
-                        ReturnSubType  => 'DynamicField_' . $DynamicFieldConfig->{Name},
-                        Data           => \%AclData,
-                        UserID         => $Self->{UserID},
-                    );
-                    if ($ACL) {
-                        my %Filter = $TicketObject->TicketAclData();
-
-                        # convert Filer key => key back to key => value using map
-                        %{$PossibleValuesFilter} = map { $_ => $PossibleValues->{$_} }
-                            keys %Filter;
-                    }
-                }
-            }
-
-            $DynamicFieldPossibleValues{ 'DynamicField_' . $DynamicFieldConfig->{Name} } = $PossibleValuesFilter;
-
-            # do not validate on invisible fields
-            if ( $Visibility{ 'DynamicField_' . $DynamicFieldConfig->{Name} } ) {
-
-                my $ValidationResult = $DynamicFieldBackendObject->EditFieldValueValidate(
-                    DynamicFieldConfig   => $DynamicFieldConfig,
-                    PossibleValuesFilter => $PossibleValuesFilter,
-                    ParamObject          => $ParamObject,
-
-                    # Mandatory is added to the configs by $Self->new
-                    Mandatory => $DynamicFieldConfig->{Mandatory},
-                );
-
-                if ( !IsHashRefWithData($ValidationResult) ) {
-                    return $LayoutObject->ErrorScreen(
-                        Message =>
-                            $LayoutObject->{LanguageObject}->Translate( 'Could not perform validation on field %s!', $DynamicFieldConfig->{Label} ),
-                        Comment => Translatable('Please contact the administrator.'),
-                    );
-                }
-
-                # propagate validation error to the Error variable to be detected by the frontend
-                if ( $ValidationResult->{ServerError} ) {
-                    $Error{ $DynamicFieldConfig->{Name} }                        = ' ServerError';
-                    $DynamicFieldValidationResult{ $DynamicFieldConfig->{Name} } = $ValidationResult;
-                }
-            }
-        }
-# EO HideShowInAgentTicketCompose
 
         # cycle trough the activated Dynamic Fields for this screen
         DYNAMICFIELD:
@@ -991,6 +1048,10 @@ sub Run {
                 # get PossibleValues
                 my $PossibleValues = $DynamicFieldBackendObject->PossibleValuesGet(
                     DynamicFieldConfig => $DynamicFieldConfig,
+# Rother OSS / HideShowInAgentTicketCompose
+
+                    # TODO also pass object here?
+# EO HideShowInAgentTicketCompose
                 );
 
                 # check if field has PossibleValues property in its configuration
@@ -1049,12 +1110,10 @@ sub Run {
 #             }
 #
 #         }
-            my $ValidationResult;
-
             # do not validate on invisible fields
             if ( $Visibility{ 'DynamicField_' . $DynamicFieldConfig->{Name} } ) {
 
-                $ValidationResult = $DynamicFieldBackendObject->EditFieldValueValidate(
+                my $ValidationResult = $DynamicFieldBackendObject->EditFieldValueValidate(
                     DynamicFieldConfig   => $DynamicFieldConfig,
                     PossibleValuesFilter => $PossibleValuesFilter,
                     ParamObject          => $ParamObject,
@@ -1066,28 +1125,39 @@ sub Run {
                 if ( !IsHashRefWithData($ValidationResult) ) {
                     return $LayoutObject->ErrorScreen(
                         Message =>
-                            $LayoutObject->{LanguageObject}->Translate( 'Could not perform validation on field %s!', $DynamicFieldConfig->{Label} ),
+                            $LayoutObject->{LanguageObject}->Translate(
+                                'Could not perform validation on field %s!', $DynamicFieldConfig->{Label}
+                            ),
                         Comment => Translatable('Please contact the administrator.'),
                     );
                 }
 
-                # propagate validation error to the Error variable to be detected by the frontend
-                if ( $ValidationResult->{ServerError} ) {
-                    $Error{ $DynamicFieldConfig->{Name} } = ' ServerError';
+                # Propagate validation error to the Error variable to be detected by the frontend.
+                if ( $ValidationResult->{ServerError} )
+                {
+                    $Error{ $DynamicFieldConfig->{Name} }                        = ' ServerError';
                     $DynamicFieldValidationResult{ $DynamicFieldConfig->{Name} } = $ValidationResult;
                 }
             }
-
-# EO HideShowInAgentTicketCompose
         }
+# EO HideShowInAgentTicketCompose
 
+# Rother OSS / HideShowInAgentTicketCompose
+#         if ( $Self->{LoadedFormDraftID} ) {
+#
+#             # Make sure we don't save form if a draft was loaded.
+#             %Error = ( LoadedFormDraft => 1 );
+#         }
+# Make sure we don't save form if a draft was loaded.
         if ( $Self->{LoadedFormDraftID} ) {
-
-            # Make sure we don't save form if a draft was loaded.
             %Error = ( LoadedFormDraft => 1 );
         }
+# EO HideShowInAgentTicketCompose
 
-        # check if there is an error
+# Rother OSS / HideShowInAgentTicketCompose
+#         # check if there is an error
+        # check errors
+# EO HideShowInAgentTicketCompose
         if (%Error) {
 
             my $Output = $LayoutObject->Header(
@@ -1125,8 +1195,8 @@ sub Run {
                 DFPossibleValues => \%DynamicFieldPossibleValues,
                 DFErrors         => \%DynamicFieldValidationResult,
 # Rother OSS / HideShowInAgentTicketCompose
-                DynamicField => $GetParam{DynamicField},
-                Visibility   => \%Visibility,
+                DynamicField     => $GetParam{DynamicField},
+                Visibility       => \%Visibility,
 # EO HideShowInAgentTicketCompose
             );
             $Output .= $LayoutObject->Footer(
@@ -1254,22 +1324,35 @@ sub Run {
                 TimeUnit  => $GetParam{TimeUnits},
                 UserID    => $Self->{UserID},
             );
+
         }
 
         # set dynamic fields
-        # cycle trough the activated Dynamic Fields for this screen
-        DYNAMICFIELD:
 # Rother OSS / HideShowInAgentTicketCompose
+#         # cycle trough the activated Dynamic Fields for this screen
+#         DYNAMICFIELD:
 #         for my $DynamicFieldConfig ( @{ $Self->{DynamicField} } ) {
+#             next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
+# cycle through the activated Dynamic Fields for this screen
+        DYNAMICFIELD:
         for my $DynamicFieldConfig ( values $Self->{DynamicField}->%* ) {
-# EO HideShowInAgentTicketCompose
             next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
+            next DYNAMICFIELD if !$Visibility{"DynamicField_$DynamicFieldConfig->{Name}"};
+# EO HideShowInAgentTicketCompose
             next DYNAMICFIELD if $DynamicFieldConfig->{Readonly};
 
             # set the object ID (TicketID or ArticleID) depending on the field configration
-            my $ObjectID = $DynamicFieldConfig->{ObjectType} eq 'Article' ? $ArticleID : $Self->{TicketID};
+# Rother OSS / HideShowInAgentTicketCompose
+#             my $ObjectID = $DynamicFieldConfig->{ObjectType} eq 'Article' ? $ArticleID : $Self->{TicketID};
+#
+#             # set the value
+            my $ObjectID = $DynamicFieldConfig->{ObjectType} eq 'Article'
+                ? $Self->{ArticleID} || $ArticleID
+                : $Self->{TicketID};
 
-            # set the value
+            # set the value which was taken from web request
+            # TODO: for Reference and Lens, the order is relevant
+# EO HideShowInAgentTicketCompose
             my $Success = $DynamicFieldBackendObject->ValueSet(
                 DynamicFieldConfig => $DynamicFieldConfig,
                 ObjectID           => $ObjectID,
@@ -1335,7 +1418,10 @@ sub Run {
             );
         }
 
-        # redirect
+# Rother OSS / HideShowInAgentTicketCompose
+#         # redirect
+        # load new URL in parent window and close popup
+# EO HideShowInAgentTicketCompose
         if (
             $StateData{TypeName} =~ /^close/i
             && !$ConfigObject->Get('Ticket::Frontend::RedirectAfterCloseDisabled')
@@ -1346,15 +1432,29 @@ sub Run {
             );
         }
 
-        # load new URL in parent window and close popup
+# Rother OSS / HideShowInAgentTicketCompose
+#         # load new URL in parent window and close popup
+# EO HideShowInAgentTicketCompose
         return $LayoutObject->PopupClose(
             URL => "Action=AgentTicketZoom;TicketID=$Self->{TicketID};ArticleID=$ArticleID",
         );
     }
-
-    # check for SMIME / PGP if customer has changed
+# Rother OSS / HideShowInAgentTicketCompose
+#
+#     # check for SMIME / PGP if customer has changed
+# EO HideShowInAgentTicketCompose
     elsif ( $Self->{Subaction} eq 'AJAXUpdate' ) {
 
+# Rother OSS / HideShowInAgentTicketCompose
+        # use the FieldIDs, which are found in AgentTicketPhone/Email, and CustomerTicketMessage
+        my %Uniformity = (
+            NewQueueID    => 'Dest',
+            NewOwnerID    => 'NewUserID',
+            NewPriorityID => 'PriorityID',
+            NewStateID    => 'NextStateID',
+        );
+
+# EO HideShowInAgentTicketCompose
         my @ExtendedData;
 
         # run compose modules
@@ -1425,14 +1525,14 @@ sub Run {
             }
         }
 
-        my $NextStates = $Self->_GetNextStates(
-            %GetParam,
-        );
-
-        # update Dynamic Fields Possible Values via AJAX
-        my @DynamicFieldAJAX;
-
 # Rother OSS / HideShowInAgentTicketCompose
+#         my $NextStates = $Self->_GetNextStates(
+#             %GetParam,
+#         );
+#
+#         # update Dynamic Fields Possible Values via AJAX
+#         my @DynamicFieldAJAX;
+#
 #         # cycle trough the activated Dynamic Fields for this screen
 #         DYNAMICFIELD:
 #         for my $DynamicFieldConfig ( @{ $Self->{DynamicField} } ) {
@@ -1488,6 +1588,23 @@ sub Run {
 #                 }
 #             );
 #         }
+#
+#         my $JSON = $LayoutObject->BuildSelectionJSON(
+#             [
+#                 @ExtendedData,
+#                 {
+#                     Name         => 'StateID',
+#                     Data         => $NextStates,
+#                     SelectedID   => $GetParam{StateID},
+#                     Translation  => 1,
+#                     PossibleNone => 1,
+#                     Max          => 100,
+#                 },
+#                 @DynamicFieldAJAX,
+#
+#             ],
+#         );
+        # update Dynamic Fields Possible Values via AJAX
         my $ElementChanged = $ParamObject->GetParam( Param => 'ElementChanged' ) || '';
         if ( $ElementChanged eq 'StateID' ) {
             $ElementChanged = 'NextStateID';
@@ -1518,9 +1635,9 @@ sub Run {
             StdFields => 0,
             Fields    => 0,
         );
-        my %ChangedElements        = $ElementChanged                                        ? ( $ElementChanged => 1 ) : ();
-        my %ChangedElementsDFStart = $ElementChanged                                        ? ( $ElementChanged => 1 ) : ();
-        my %ChangedStdFields       = $ElementChanged && $ElementChanged !~ /^DynamicField_/ ? ( $ElementChanged => 1 ) : ();
+        my %ChangedElements        = $ElementChanged ? ( $ElementChanged => 1 ) : ();
+        my %ChangedElementsDFStart = %ChangedElements;
+        my %ChangedStdFields       = $ElementChanged && $ElementChanged !~ /^DynamicField_/ ? %ChangedElements : ();
 
         my $LoopProtection = 100;
         my %StdFieldValues;
@@ -1576,31 +1693,6 @@ sub Run {
                     }
                 }
 
-                # check value of state
-                $NextStates = $Self->_GetNextStates(
-                    %GetParam,
-                );
-
-                # check whether current selected value is still valid for the field
-                if ( $GetParam{StateID} && !$NextStates->{ $GetParam{StateID} } ) {
-
-                    # if not empty the field
-                    $GetParam{StateID}               = '';
-                    $NewChangedElements{NextStateID} = 1;
-                    $ChangedStdFields{NextStateID}   = 1;
-                }
-
-                # autoselect
-                elsif ( !$GetParam{StateID} && $Autoselect && $Autoselect->{NextStateID} ) {
-                    $GetParam{StateID} = $FieldRestrictionsObject->Autoselect(
-                        PossibleValues => $NextStates,
-                    ) || '';
-                    if ( $GetParam{StateID} ) {
-                        $NewChangedElements{NextStateID} = 1;
-                        $ChangedStdFields{NextStateID}   = 1;
-                    }
-                }
-
                 if ( !%NewChangedElements ) {
                     $Convergence{StdFields} = 1;
                 }
@@ -1618,6 +1710,7 @@ sub Run {
                         Priority => 'error',
                         Message  => "Ran into unresolvable loop!",
                     );
+
                     return;
                 }
 
@@ -1638,6 +1731,7 @@ sub Run {
                     ChangedElements           => \%ChangedElements,            # optional to reduce ACL evaluation
                     Action                    => $Self->{Action},
                     UserID                    => $Self->{UserID},
+                    TicketID                  => $Self->{TicketID},
                     FormID                    => $Self->{FormID},
                     CustomerUser              => $Selected || '',
                     GetParam                  => {
@@ -1645,9 +1739,9 @@ sub Run {
                         NextStateID => $GetParam{StateID},
                         StateID     => undef,
                     },
-                    Autoselect      => $Autoselect,
-                    ACLPreselection => $ACLPreselection,
-                    LoopProtection  => \$LoopProtection,
+                    Autoselect                => $Autoselect,
+                    ACLPreselection           => $ACLPreselection,
+                    LoopProtection            => \$LoopProtection,
                 );
 
                 # combine FieldStates
@@ -1682,9 +1776,10 @@ sub Run {
 
         }
 
-        # cycle through the activated Dynamic Fields for this screen
+        # build the AJAX return for the dynamic fields
+        my @DynamicFieldAJAX;
         DYNAMICFIELD:
-        for my $Name ( sort keys %{ $DynFieldStates{Fields} } ) {
+        for my $Name ( sort keys $DynFieldStates{Fields}->%* ) {
             my $DynamicFieldConfig = $Self->{DynamicField}{$Name};
 
             if ( $DynamicFieldConfig->{Config}{MultiValue} && ref $GetParam{DynamicField}{"DynamicField_$DynamicFieldConfig->{Name}"} eq 'ARRAY' ) {
@@ -1800,22 +1895,35 @@ sub Run {
             };
         }
 
-# EO HideShowInAgentTicketCompose
+        # build AJAX return for the standard fields
+        my @StdFieldAJAX;
+        my %Attributes = (
+            NextStateID => {
+                Translation  => 1,
+                PossibleNone => 1,
+                Max          => 100,
+            },
+        );
+
+        my %Diversity = reverse %Uniformity;
+        for my $Field ( sort keys %StdFieldValues ) {
+            push @StdFieldAJAX, {
+                Name       => $Diversity{$Field} || $Field,
+                Data       => $StdFieldValues{$Field},
+                SelectedID => $GetParam{$Field},
+                %{ $Attributes{$Field} },
+            };
+        }
+
         my $JSON = $LayoutObject->BuildSelectionJSON(
             [
-                @ExtendedData,
-                {
-                    Name         => 'StateID',
-                    Data         => $NextStates,
-                    SelectedID   => $GetParam{StateID},
-                    Translation  => 1,
-                    PossibleNone => 1,
-                    Max          => 100,
-                },
+                @StdFieldAJAX,
                 @DynamicFieldAJAX,
-
             ],
         );
+
+        # can't use JSONReply here, as we already have JSON
+# EO HideShowInAgentTicketCompose
         return $LayoutObject->Attachment(
             ContentType => 'application/json',
             Content     => $JSON,
@@ -2293,8 +2401,60 @@ sub Run {
                 }
             }
         }
-# Rother OSS / HideShowInAgentTicketCompose
 
+# Rother OSS / HideShowInAgentTicketCompose
+#         # remember dynamic field validation results if erroneous
+#         my %DynamicFieldPossibleValues;
+#
+#         # cycle trough the activated Dynamic Fields for this screen
+#         DYNAMICFIELD:
+#         for my $DynamicFieldConfig ( @{ $Self->{DynamicField} } ) {
+#             next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
+#
+#             my $PossibleValuesFilter;
+#
+#             my $IsACLReducible = $DynamicFieldBackendObject->HasBehavior(
+#                 DynamicFieldConfig => $DynamicFieldConfig,
+#                 Behavior           => 'IsACLReducible',
+#             );
+#
+#             if ($IsACLReducible) {
+#
+#                 # get PossibleValues
+#                 my $PossibleValues = $DynamicFieldBackendObject->PossibleValuesGet(
+#                     DynamicFieldConfig => $DynamicFieldConfig,
+#                 );
+#
+#                 # check if field has PossibleValues property in its configuration
+#                 if ( IsHashRefWithData($PossibleValues) ) {
+#
+#                     # convert possible values key => value to key => key for ACLs using a Hash slice
+#                     my %AclData = %{$PossibleValues};
+#                     @AclData{ keys %AclData } = keys %AclData;
+#
+#                     # set possible values filter from ACLs
+#                     my $ACL = $TicketObject->TicketAcl(
+#                         %GetParam,
+#                         Action        => $Self->{Action},
+#                         TicketID      => $Self->{TicketID},
+#                         ReturnType    => 'Ticket',
+#                         ReturnSubType => 'DynamicField_' . $DynamicFieldConfig->{Name},
+#                         Data          => \%AclData,
+#                         UserID        => $Self->{UserID},
+#                     );
+#                     if ($ACL) {
+#                         my %Filter = $TicketObject->TicketAclData();
+#
+#                         # convert Filer key => key back to key => value using map
+#                         %{$PossibleValuesFilter} = map { $_ => $PossibleValues->{$_} }
+#                             keys %Filter;
+#                     }
+#                 }
+#             }
+#
+#             $DynamicFieldPossibleValues{ 'DynamicField_' . $DynamicFieldConfig->{Name} } = $PossibleValuesFilter;
+#
+#         }
         # get list type
         my $TreeView = 0;
         if ( $ConfigObject->Get('Ticket::Frontend::ListType') eq 'tree' ) {
@@ -2307,12 +2467,6 @@ sub Run {
         my $HideAutoselectedJSON;
         if ($Autoselect) {
             my @HideAutoselected = grep { !ref( $Autoselect->{$_} ) && $Autoselect->{$_} == 2 } keys %{$Autoselect};
-            AUTOSELECT:
-            for my $Item (@HideAutoselected) {
-                next AUTOSELECT if $Item ne 'NextStateID';
-                $Item = 'StateID';
-                last AUTOSELECT;
-            }
             if ( $Autoselect->{DynamicField} ) {
                 push @HideAutoselected,
                     map { "DynamicField_" . $_ }
@@ -2345,8 +2499,8 @@ sub Run {
             StdFields => 0,
             Fields    => 0,
         );
-        my %ChangedElements        = ();
-        my %ChangedElementsDFStart = ();
+        my %ChangedElements;
+        my %ChangedElementsDFStart;
         my %ChangedStdFields;
 
         my $LoopProtection = 100;
@@ -2419,28 +2573,58 @@ sub Run {
                     }
                 }
 
-                # check value of state
-                my $NextStates = $Self->_GetNextStates(
-                    %GetParam,
-                );
+                # for each standard field which has to be checked, run the defined method
+                METHOD:
+                for my $Field ( @{ $Self->{FieldMethods} } ) {
+                    next METHOD unless $Check{ $Field->{FieldID} };
 
-                # check whether current selected value is still valid for the field
-                if ( $GetParam{StateID} && !$NextStates->{ $GetParam{StateID} } ) {
+                    # use $Check{ $Field->{FieldID} } for Dest=>QueueID
+                    $StdFieldValues{ $Check{ $Field->{FieldID} } } = $Field->{Method}->(
+                        $Self,
+                        %GetParam,
+                        TicketID       => $Self->{TicketID},
+                        CustomerUserID => $Selected || '',
+                        StateID        => $GetParam{NextStateID},
+                    );
 
-                    # if not empty the field
-                    $GetParam{StateID}               = '';
-                    $NewChangedElements{NextStateID} = 1;
-                    $ChangedStdFields{NextStateID}   = 1;
-                }
+                    # special stuff for QueueID/Dest: included for more similarity to AgentTicketPhone etc.;
+                    if ( $Field->{FieldID} eq 'Dest' ) {
+                        $StdFieldValues{Dest} = $StdFieldValues{QueueID};
 
-                # autoselect
-                elsif ( !$GetParam{StateID} && $Autoselect && $Autoselect->{NextStateID} ) {
-                    $GetParam{StateID} = $FieldRestrictionsObject->Autoselect(
-                        PossibleValues => $NextStates,
-                    ) || '';
-                    if ( $GetParam{StateID} ) {
-                        $NewChangedElements{NextStateID} = 1;
-                        $ChangedStdFields{NextStateID}   = 1;
+                        # check current selection of QueueID (Dest will be done together with the other fields)
+                        if ( $GetParam{QueueID} && !$StdFieldValues{QueueID}{ $GetParam{QueueID} } ) {
+                            $GetParam{QueueID} = '';
+                        }
+
+                        # autoselect
+                        elsif ( !$GetParam{QueueID} && $Autoselect && $Autoselect->{Dest} ) {
+                            $GetParam{QueueID} = $FieldRestrictionsObject->Autoselect(
+                                PossibleValues => $StdFieldValues{QueueID},
+                            ) || '';
+                        }
+                    }
+
+                    # check whether current selected value is still valid for the field
+                    if (
+                        $GetParam{ $Field->{FieldID} }
+                        && !$StdFieldValues{ $Field->{FieldID} }{ $GetParam{ $Field->{FieldID} } }
+                        )
+                    {
+                        # if not empty the field
+                        $GetParam{ $Field->{FieldID} }           = '';
+                        $NewChangedElements{ $Field->{FieldID} } = 1;
+                        $ChangedStdFields{ $Field->{FieldID} }   = 1;
+                    }
+
+                    # autoselect
+                    elsif ( !$GetParam{ $Field->{FieldID} } && $Autoselect && $Autoselect->{ $Field->{FieldID} } ) {
+                        $GetParam{ $Field->{FieldID} } = $FieldRestrictionsObject->Autoselect(
+                            PossibleValues => $StdFieldValues{ $Field->{FieldID} },
+                        ) || '';
+                        if ( $GetParam{ $Field->{FieldID} } ) {
+                            $NewChangedElements{ $Field->{FieldID} } = 1;
+                            $ChangedStdFields{ $Field->{FieldID} }   = 1;
+                        }
                     }
                 }
 
@@ -2461,6 +2645,7 @@ sub Run {
                         Priority => 'error',
                         Message  => "Ran into unresolvable loop!",
                     );
+
                     return;
                 }
 
@@ -2489,9 +2674,10 @@ sub Run {
                         NextStateID => $GetParam{StateID},
                         StateID     => undef,
                     },
-                    Autoselect      => $Autoselect,
-                    ACLPreselection => $ACLPreselection,
-                    LoopProtection  => \$LoopProtection,
+                    Autoselect                => $Autoselect,
+                    ACLPreselection           => $ACLPreselection,
+                    LoopProtection            => \$LoopProtection,
+                    InitialRun                => $InitialRun,
                 );
 
                 # combine FieldStates
@@ -2532,8 +2718,8 @@ sub Run {
                 ? $DynFieldStates{Fields}{$_}{PossibleValues}
                 : undef
         } ( keys $Self->{DynamicField}->%* );
-# EO HideShowInAgentTicketCompose
 
+# EO HideShowInAgentTicketCompose
         # build references if exist
         my $References = ( $Data{MessageID} || '' ) . ( $Data{References} || '' );
 
@@ -2634,6 +2820,7 @@ sub _Mask {
     my $LayoutObject = $Kernel::OM->Get('Kernel::Output::HTML::Layout');
     my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
 
+# Rother OSS / HideShowInAgentTicketCompose
     if ( $Param{HideAutoselected} ) {
 
         # add Autoselect JS
@@ -2642,6 +2829,7 @@ sub _Mask {
         );
     }
 
+# EO HideShowInAgentTicketCompose
     # get config for frontend module
     my $Config = $ConfigObject->Get("Ticket::Frontend::$Self->{Action}");
 
@@ -2925,17 +3113,20 @@ sub _Mask {
 #         my %DynamicFieldValues
 #             = map { 'DynamicField_' . $_ => $Param{ 'DynamicField_' . $_ } } grep { $DynamicFieldConfigs{$_}->{ObjectType} eq 'Ticket' } keys %DynamicFieldConfigs;
 # EO HideShowInAgentTicketCompose
-
         $Param{DynamicFieldHTML} = $Kernel::OM->Get('Kernel::Output::HTML::DynamicField::Mask')->EditSectionRender(
-            Content              => $Self->{MaskDefinition},
 # Rother OSS / HideShowInAgentTicketCompose
+#             Content              => $Self->{MaskDefinition},
 #             DynamicFields        => \%DynamicFieldConfigs,
+            Content              => $Self->{TicketMaskDefinition},
             DynamicFields        => $Self->{DynamicField},
             Visibility           => $Param{Visibility},
 # EO HideShowInAgentTicketCompose
             LayoutObject         => $LayoutObject,
             ParamObject          => $Kernel::OM->Get('Kernel::System::Web::Request'),
+# Rother OSS / HideShowInAgentTicketCompose
+#             DynamicFieldValues   => \%DynamicFieldValues,
             DynamicFieldValues   => $Param{DynamicField},
+# EO HideShowInAgentTicketCompose
             PossibleValuesFilter => $Param{DFPossibleValues},
             Errors               => $Param{DFErrors},
             Object               => {
