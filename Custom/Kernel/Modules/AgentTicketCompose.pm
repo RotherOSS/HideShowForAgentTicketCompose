@@ -87,38 +87,24 @@ sub new {
         FieldFilter => $Config->{DynamicField} || {},
     );
 
-# Rother OSS / HideShowInAgentTicketCompose
-#     my $Definition = $Kernel::OM->Get('Kernel::System::Ticket::Mask')->DefinitionGet(
-    my $TicketDefinition = $Kernel::OM->Get('Kernel::System::Ticket::Mask')->DefinitionGet(
-# EO HideShowInAgentTicketCompose
+    my $Definition = $Kernel::OM->Get('Kernel::System::Ticket::Mask')->DefinitionGet(
         Mask => $Self->{Action},
     ) || {};
 
-# Rother OSS / HideShowInAgentTicketCompose
-#     $Self->{DynamicField}   = [];
-#     $Self->{MaskDefinition} = $Definition->{Mask};
-    $Self->{TicketMaskDefinition} = $TicketDefinition->{Mask};
-    $Self->{DynamicField}         = {};
-# EO HideShowInAgentTicketCompose
+    $Self->{DynamicField}   = [];
+    $Self->{MaskDefinition} = $Definition->{Mask};
 
     # align sysconfig and ticket mask data I
     for my $DynamicField ( @{ $DynamicFieldList // [] } ) {
-# Rother OSS / HideShowInAgentTicketCompose
-#         if ( exists $Definition->{DynamicFields}{ $DynamicField->{Name} } ) {
-#             my $Parameters = delete $Definition->{DynamicFields}{ $DynamicField->{Name} } // {};
-        if ( exists $TicketDefinition->{DynamicFields}{ $DynamicField->{Name} } ) {
-            my $Parameters = delete $TicketDefinition->{DynamicFields}{ $DynamicField->{Name} } // {};
-# EO HideShowInAgentTicketCompose
+        if ( exists $Definition->{DynamicFields}{ $DynamicField->{Name} } ) {
+            my $Parameters = delete $Definition->{DynamicFields}{ $DynamicField->{Name} } // {};
 
             for my $Attribute ( keys $Parameters->%* ) {
                 $DynamicField->{$Attribute} = $Parameters->{$Attribute};
             }
         }
         else {
-# Rother OSS / HideShowInAgentTicketCompose
-#             push $Self->{MaskDefinition}->@*, {
-            push $Self->{TicketMaskDefinition}->@*, {
-# EO HideShowInAgentTicketCompose
+            push $Self->{MaskDefinition}->@*, {
                 DF        => $DynamicField->{Name},
                 Mandatory => $Config->{DynamicField}{ $DynamicField->{Name} } == 2 ? 1 : 0,
             };
@@ -135,19 +121,15 @@ sub new {
     }
 
     # align sysconfig and ticket mask data II
+    for my $DynamicFieldName ( keys $Definition->{DynamicFields}->%* ) {
 # Rother OSS / HideShowInAgentTicketCompose
-#     for my $DynamicFieldName ( keys $Definition->{DynamicFields}->%* ) {
 #         push $Self->{DynamicField}->@*, $DynamicFieldObject->DynamicFieldGet(
-    for my $DynamicFieldName ( keys $TicketDefinition->{DynamicFields}->%* ) {
         $Self->{DynamicField}{$DynamicFieldName} = $DynamicFieldObject->DynamicFieldGet(
 # EO HideShowInAgentTicketCompose
             Name => $DynamicFieldName,
         );
 
-# Rother OSS / HideShowInAgentTicketCompose
-#         my $Parameters = $Definition->{DynamicFields}{$DynamicFieldName} // {};
-        my $Parameters = $TicketDefinition->{DynamicFields}{$DynamicFieldName} // {};
-# EO HideShowInAgentTicketCompose
+        my $Parameters = $Definition->{DynamicFields}{$DynamicFieldName} // {};
 
         for my $Attribute ( keys $Parameters->%* ) {
 # Rother OSS / HideShowInAgentTicketCompose
@@ -784,7 +766,6 @@ sub Run {
                         Success      => 0,
                         ErrorMessage => $Kernel::OM->Get('Kernel::Language')->Translate( "FormDraft name %s is already in use!", $Title ),
                     );
-
                     last DRAFT;
                 }
             }
@@ -1324,7 +1305,6 @@ sub Run {
                 TimeUnit  => $GetParam{TimeUnits},
                 UserID    => $Self->{UserID},
             );
-
         }
 
         # set dynamic fields
@@ -1448,9 +1428,6 @@ sub Run {
 # Rother OSS / HideShowInAgentTicketCompose
         # use the FieldIDs, which are found in AgentTicketPhone/Email, and CustomerTicketMessage
         my %Uniformity = (
-            NewQueueID    => 'Dest',
-            NewOwnerID    => 'NewUserID',
-            NewPriorityID => 'PriorityID',
             NewStateID    => 'NextStateID',
         );
 
@@ -3114,10 +3091,9 @@ sub _Mask {
 #             = map { 'DynamicField_' . $_ => $Param{ 'DynamicField_' . $_ } } grep { $DynamicFieldConfigs{$_}->{ObjectType} eq 'Ticket' } keys %DynamicFieldConfigs;
 # EO HideShowInAgentTicketCompose
         $Param{DynamicFieldHTML} = $Kernel::OM->Get('Kernel::Output::HTML::DynamicField::Mask')->EditSectionRender(
+            Content              => $Self->{MaskDefinition},
 # Rother OSS / HideShowInAgentTicketCompose
-#             Content              => $Self->{MaskDefinition},
 #             DynamicFields        => \%DynamicFieldConfigs,
-            Content              => $Self->{TicketMaskDefinition},
             DynamicFields        => $Self->{DynamicField},
             Visibility           => $Param{Visibility},
 # EO HideShowInAgentTicketCompose
