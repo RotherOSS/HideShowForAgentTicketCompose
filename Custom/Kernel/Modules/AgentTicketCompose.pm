@@ -18,7 +18,7 @@
 
 package Kernel::Modules::AgentTicketCompose;
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 # use strict;
 # use warnings;
 use v5.24;
@@ -33,7 +33,7 @@ use List::Util qw(any);
 # CPAN modules
 
 # OTOBO modules
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
 use Kernel::System::VariableCheck qw(:all);
 use Kernel::Language              qw(Translatable);
 use Mail::Address                 ();
@@ -44,31 +44,31 @@ sub new {
     my ( $Type, %Param ) = @_;
 
     # allocate new hash for object
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #     my $Self = {%Param};
 #     bless( $Self, $Type );
     my $Self = bless {%Param}, $Type;
 
     my $ParamObject = $Kernel::OM->Get('Kernel::System::Web::Request');
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
 
     # Try to load draft if requested.
     if (
         $Kernel::OM->Get('Kernel::Config')->Get("Ticket::Frontend::$Self->{Action}")->{FormDraft}
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         && $Kernel::OM->Get('Kernel::System::Web::Request')->GetParam( Param => 'LoadFormDraft' )
 #         && $Kernel::OM->Get('Kernel::System::Web::Request')->GetParam( Param => 'FormDraftID' )
         && $ParamObject->GetParam( Param => 'LoadFormDraft' )
         && $ParamObject->GetParam( Param => 'FormDraftID' )
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
         )
     {
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         $Self->{LoadedFormDraftID} = $Kernel::OM->Get('Kernel::System::Web::Request')->LoadFormDraft(
 #             FormDraftID => $Kernel::OM->Get('Kernel::System::Web::Request')->GetParam( Param => 'FormDraftID' ),
         $Self->{LoadedFormDraftID} = $ParamObject->LoadFormDraft(
             FormDraftID => $ParamObject->GetParam( Param => 'FormDraftID' ),
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
             UserID      => $Self->{UserID},
         );
     }
@@ -114,41 +114,41 @@ sub new {
             }
         }
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         push $Self->{DynamicField}->@*, $DynamicField;
         $Self->{DynamicField}{ $DynamicField->{Name} } = $DynamicField;
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
     }
 
     # align sysconfig and ticket mask data II
     for my $DynamicFieldName ( keys $Definition->{DynamicFields}->%* ) {
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         push $Self->{DynamicField}->@*, $DynamicFieldObject->DynamicFieldGet(
         $Self->{DynamicField}{$DynamicFieldName} = $DynamicFieldObject->DynamicFieldGet(
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
             Name => $DynamicFieldName,
         );
 
         my $Parameters = $Definition->{DynamicFields}{$DynamicFieldName} // {};
 
         for my $Attribute ( keys $Parameters->%* ) {
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #             $Self->{DynamicField}[-1]{$Attribute} = $Parameters->{$Attribute};
             $Self->{DynamicField}{$DynamicFieldName}{$Attribute} = $Parameters->{$Attribute};
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
         }
     }
 
     # get form id
     $Self->{FormID} = $Kernel::OM->Get('Kernel::System::Web::FormCache')->PrepareFormID(
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         ParamObject  => $Kernel::OM->Get('Kernel::System::Web::Request'),
         ParamObject  => $ParamObject,
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
         LayoutObject => $Kernel::OM->Get('Kernel::Output::HTML::Layout'),
     );
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
     # methods which are used to determine the possible values of the standard fields
     $Self->{FieldMethods} = [
         {
@@ -161,14 +161,14 @@ sub new {
     $Self->{InternalDependancy} = {
     };
 
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
     return $Self;
 }
 
 sub Run {
     my ( $Self, %Param ) = @_;
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #     # get layout object
 #     my $LayoutObject = $Kernel::OM->Get('Kernel::Output::HTML::Layout');
     # get needed objects
@@ -179,7 +179,7 @@ sub Run {
     my $FieldRestrictionsObject = $Kernel::OM->Get('Kernel::System::Ticket::FieldRestrictions');
     my $ArticleObject           = $Kernel::OM->Get('Kernel::System::Ticket::Article');
     my $MainObject              = $Kernel::OM->Get('Kernel::System::Main');
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
 
     # check needed stuff
     if ( !$Self->{TicketID} ) {
@@ -189,7 +189,7 @@ sub Run {
         );
     }
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #     # get needed objects
 #     my $ConfigObject  = $Kernel::OM->Get('Kernel::Config');
 #     my $TicketObject  = $Kernel::OM->Get('Kernel::System::Ticket');
@@ -199,7 +199,7 @@ sub Run {
 #
 #     # get config for frontend module
     # get config of frontend module
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
     my $Config = $ConfigObject->Get("Ticket::Frontend::$Self->{Action}");
 
     # check permissions
@@ -243,10 +243,10 @@ sub Run {
 
     # Check for failed draft loading request.
     if (
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         $Kernel::OM->Get('Kernel::System::Web::Request')->GetParam( Param => 'LoadFormDraft' )
         $ParamObject->GetParam( Param => 'LoadFormDraft' )
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
         && !$Self->{LoadedFormDraftID}
         )
     {
@@ -258,10 +258,10 @@ sub Run {
 
     my %Ticket = $TicketObject->TicketGet(
         TicketID      => $Self->{TicketID},
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         DynamicFields => 1
         DynamicFields => 1,
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
     );
 
     # get lock state
@@ -318,11 +318,11 @@ sub Run {
         }
     }
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #     # get param object
 #     my $ParamObject = $Kernel::OM->Get('Kernel::System::Web::Request');
     my $ArticleBackendObject = $ArticleObject->BackendForChannel( ChannelName => 'Email' );
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
 
     # get params
     my %GetParam;
@@ -541,7 +541,7 @@ sub Run {
         }
     }
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #     # get Dynamic fields form ParamObject
 #     my %DynamicFieldValues;
 #
@@ -581,10 +581,10 @@ sub Run {
             LayoutObject       => $LayoutObject,
         );
     }
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
 
     # convert dynamic field values into a structure for ACLs
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #     my %DynamicFieldACLParameters;
 #     DYNAMICFIELD:
 #     for my $DynamicFieldItem ( sort keys %DynamicFieldValues ) {
@@ -605,7 +605,7 @@ sub Run {
         }
         $GetParam{DynamicField} = \%DynamicFieldACLParameters;
     }
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
 
     # transform pending time, time stamp based on user time zone
     if (
@@ -621,7 +621,7 @@ sub Run {
         );
     }
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #     # get needed objects
 #     my $UploadCacheObject = $Kernel::OM->Get('Kernel::System::Web::UploadCache');
 #     my $MainObject        = $Kernel::OM->Get('Kernel::System::Main');
@@ -635,7 +635,7 @@ sub Run {
 
     # get upload cache object
     my $UploadCacheObject = $Kernel::OM->Get('Kernel::System::Web::UploadCache');
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
 
     # send email
     if ( $Self->{Subaction} eq 'SendEmail' || $Self->{LoadedFormDraftID} ) {
@@ -719,11 +719,11 @@ sub Run {
         # Check draft name.
         if (
             $FormDraftAction
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #             && ( $FormDraftAction eq 'Add' || $FormDraftAction eq 'Update' )
             &&
             ( $FormDraftAction eq 'Add' || $FormDraftAction eq 'Update' )
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
             )
         {
             my $Title = $ParamObject->GetParam( Param => 'FormDraftTitle' );
@@ -815,7 +815,7 @@ sub Run {
             }
         }
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         if (%FormDraftResponse) {
 #
 #             # build JSON output
@@ -837,7 +837,7 @@ sub Run {
                 Data => \%FormDraftResponse
             );
         }
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
 
         # check pending date
         if ( $StateData{TypeName} && $StateData{TypeName} =~ /^pending/i ) {
@@ -976,7 +976,7 @@ sub Run {
             }
         }
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
         # skip validation of hidden fields
         my %Visibility;
 
@@ -1004,17 +1004,17 @@ sub Run {
             %Visibility = map { 'DynamicField_' . $_ => 1 } keys $Self->{DynamicField}->%*;
         }
 
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
         # remember dynamic field validation results if erroneous
         my %DynamicFieldValidationResult;
         my %DynamicFieldPossibleValues;
 
         # cycle trough the activated Dynamic Fields for this screen
         DYNAMICFIELD:
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         for my $DynamicFieldConfig ( @{ $Self->{DynamicField} } ) {
         for my $DynamicFieldConfig ( values $Self->{DynamicField}->%* ) {
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
             next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
 
             my $PossibleValuesFilter;
@@ -1029,10 +1029,10 @@ sub Run {
                 # get PossibleValues
                 my $PossibleValues = $DynamicFieldBackendObject->PossibleValuesGet(
                     DynamicFieldConfig => $DynamicFieldConfig,
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 
                     # TODO also pass object here?
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
                 );
 
                 # check if field has PossibleValues property in its configuration
@@ -1064,7 +1064,7 @@ sub Run {
 
             $DynamicFieldPossibleValues{ 'DynamicField_' . $DynamicFieldConfig->{Name} } = $PossibleValuesFilter;
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #             my $ValidationResult = $DynamicFieldBackendObject->EditFieldValueValidate(
 #                 DynamicFieldConfig   => $DynamicFieldConfig,
 #                 PossibleValuesFilter => $PossibleValuesFilter,
@@ -1121,9 +1121,9 @@ sub Run {
                 }
             }
         }
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         if ( $Self->{LoadedFormDraftID} ) {
 #
 #             # Make sure we don't save form if a draft was loaded.
@@ -1133,12 +1133,12 @@ sub Run {
         if ( $Self->{LoadedFormDraftID} ) {
             %Error = ( LoadedFormDraft => 1 );
         }
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         # check if there is an error
         # check errors
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
         if (%Error) {
 
             my $Output = $LayoutObject->Header(
@@ -1175,10 +1175,10 @@ sub Run {
                 %GetParam,
                 DFPossibleValues => \%DynamicFieldPossibleValues,
                 DFErrors         => \%DynamicFieldValidationResult,
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
                 DynamicField     => $GetParam{DynamicField},
                 Visibility       => \%Visibility,
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
             );
             $Output .= $LayoutObject->Footer(
                 Type => 'Small',
@@ -1308,7 +1308,7 @@ sub Run {
         }
 
         # set dynamic fields
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         # cycle trough the activated Dynamic Fields for this screen
 #         DYNAMICFIELD:
 #         for my $DynamicFieldConfig ( @{ $Self->{DynamicField} } ) {
@@ -1318,11 +1318,11 @@ sub Run {
         for my $DynamicFieldConfig ( values $Self->{DynamicField}->%* ) {
             next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
             next DYNAMICFIELD if !$Visibility{"DynamicField_$DynamicFieldConfig->{Name}"};
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
             next DYNAMICFIELD if $DynamicFieldConfig->{Readonly};
 
             # set the object ID (TicketID or ArticleID) depending on the field configration
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #             my $ObjectID = $DynamicFieldConfig->{ObjectType} eq 'Article' ? $ArticleID : $Self->{TicketID};
 #
 #             # set the value
@@ -1332,7 +1332,7 @@ sub Run {
 
             # set the value which was taken from web request
             # TODO: for Reference and Lens, the order is relevant
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
             my $Success = $DynamicFieldBackendObject->ValueSet(
                 DynamicFieldConfig => $DynamicFieldConfig,
                 ObjectID           => $ObjectID,
@@ -1398,10 +1398,10 @@ sub Run {
             );
         }
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         # redirect
         # load new URL in parent window and close popup
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
         if (
             $StateData{TypeName} =~ /^close/i
             && !$ConfigObject->Get('Ticket::Frontend::RedirectAfterCloseDisabled')
@@ -1412,26 +1412,26 @@ sub Run {
             );
         }
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         # load new URL in parent window and close popup
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
         return $LayoutObject->PopupClose(
             URL => "Action=AgentTicketZoom;TicketID=$Self->{TicketID};ArticleID=$ArticleID",
         );
     }
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #
 #     # check for SMIME / PGP if customer has changed
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
     elsif ( $Self->{Subaction} eq 'AJAXUpdate' ) {
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
         # use the FieldIDs, which are found in AgentTicketPhone/Email, and CustomerTicketMessage
         my %Uniformity = (
             NewStateID    => 'NextStateID',
         );
 
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
         my @ExtendedData;
 
         # run compose modules
@@ -1502,7 +1502,7 @@ sub Run {
             }
         }
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         my $NextStates = $Self->_GetNextStates(
 #             %GetParam,
 #         );
@@ -1900,7 +1900,7 @@ sub Run {
         );
 
         # can't use JSONReply here, as we already have JSON
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
         return $LayoutObject->Attachment(
             ContentType => 'application/json',
             Content     => $JSON,
@@ -2379,7 +2379,7 @@ sub Run {
             }
         }
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         # remember dynamic field validation results if erroneous
 #         my %DynamicFieldPossibleValues;
 #
@@ -2696,7 +2696,7 @@ sub Run {
                 : undef
         } ( keys $Self->{DynamicField}->%* );
 
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
         # build references if exist
         my $References = ( $Data{MessageID} || '' ) . ( $Data{References} || '' );
 
@@ -2763,12 +2763,12 @@ sub Run {
             References       => "$References",
             TicketBackType   => $TicketBackType,
             DFPossibleValues => \%DynamicFieldPossibleValues,
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
             DynamicField     => $GetParam{DynamicField},
             NextState        => $GetParam{StateID} ? $StdFieldValues{NextStateID}{ $GetParam{StateID} } : '',
             HideAutoselected => $HideAutoselectedJSON,
             Visibility       => $DynFieldStates{Visibility},
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
         );
         $Output .= $LayoutObject->Footer(
             Type => 'Small',
@@ -2797,7 +2797,7 @@ sub _Mask {
     my $LayoutObject = $Kernel::OM->Get('Kernel::Output::HTML::Layout');
     my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
     if ( $Param{HideAutoselected} ) {
 
         # add Autoselect JS
@@ -2806,7 +2806,7 @@ sub _Mask {
         );
     }
 
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
     # get config for frontend module
     my $Config = $ConfigObject->Get("Ticket::Frontend::$Self->{Action}");
 
@@ -3083,36 +3083,36 @@ sub _Mask {
 
     # render dynamic fields
     {
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         my %DynamicFieldConfigs = map { $_->{Name} => $_ } $Self->{DynamicField}->@*;
 #
 #         # grep dynamic field values from ticket data
 #         my %DynamicFieldValues
 #             = map { 'DynamicField_' . $_ => $Param{ 'DynamicField_' . $_ } } grep { $DynamicFieldConfigs{$_}->{ObjectType} eq 'Ticket' } keys %DynamicFieldConfigs;
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
         $Param{DynamicFieldHTML} = $Kernel::OM->Get('Kernel::Output::HTML::DynamicField::Mask')->EditSectionRender(
             Content              => $Self->{MaskDefinition},
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #             DynamicFields        => \%DynamicFieldConfigs,
             DynamicFields        => $Self->{DynamicField},
             Visibility           => $Param{Visibility},
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
             LayoutObject         => $LayoutObject,
             ParamObject          => $Kernel::OM->Get('Kernel::System::Web::Request'),
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #             DynamicFieldValues   => \%DynamicFieldValues,
             DynamicFieldValues   => $Param{DynamicField},
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
             PossibleValuesFilter => $Param{DFPossibleValues},
             Errors               => $Param{DFErrors},
             Object               => {
                 CustomerID     => $Param{CustomerID},
                 CustomerUserID => $Param{CustomerUserID},
                 UserID         => $Self->{UserID},
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #                 %DynamicFieldValues,
                 $Param{DynamicField}->%*,
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
             },
         );
 
