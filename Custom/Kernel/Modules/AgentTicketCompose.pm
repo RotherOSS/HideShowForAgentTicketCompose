@@ -91,7 +91,10 @@ sub new {
         Mask => $Self->{Action},
     ) || {};
 
-    $Self->{DynamicField}   = [];
+# Rother OSS / HideShowForAgentTicketCompose
+#     $Self->{DynamicField}   = [];
+    $Self->{DynamicField}   = {};
+# EO HideShowForAgentTicketCompose
     $Self->{MaskDefinition} = $Definition->{Mask};
 
     # align sysconfig and ticket mask data I
