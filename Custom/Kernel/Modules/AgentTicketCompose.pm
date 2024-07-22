@@ -1119,6 +1119,9 @@ sub Run {
         DYNAMICFIELD:
         for my $DynamicFieldConfig ( @{$DynamicField} ) {
             next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
+# Rother OSS / HideShowForAgentTicketCompose
+            next DYNAMICFIELD if !$Visibility{"DynamicField_$DynamicFieldConfig->{Name}"};
+# EO HideShowForAgentTicketCompose
 
             # set the object ID (TicketID or ArticleID) depending on the field configration
             my $ObjectID = $DynamicFieldConfig->{ObjectType} eq 'Article' ? $ArticleID : $Self->{TicketID};
@@ -2072,11 +2075,8 @@ sub Run {
         my $HideAutoselectedJSON;
         if ($Autoselect) {
             my @HideAutoselected = grep { !ref( $Autoselect->{$_} ) && $Autoselect->{$_} == 2 } keys %{$Autoselect};
-            AUTOSELECT:
             for my $Item (@HideAutoselected) {
-                next AUTOSELECT if $Item ne 'NextStateID';
                 $Item = 'StateID';
-                last AUTOSELECT;
             }
             if ( $Autoselect->{DynamicField} ) {
                 push @HideAutoselected,
@@ -2292,13 +2292,13 @@ sub Run {
         my %DynamicFieldHTML;
 
         # cycle trough the activated Dynamic Fields for this screen
-        DYNAMICFIELD:
-
 # Rother OSS / HideShowForAgentTicketCompose
+#         DYNAMICFIELD:
 #         for my $DynamicFieldConfig ( @{$DynamicField} ) {
 #             next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
 #
 #             my $PossibleValuesFilter;
+        DYNAMICFIELD:
         for my $i ( 0 .. $#{$DynamicField} ) {
             next DYNAMICFIELD if !IsHashRefWithData( $DynamicField->[$i] );
 
@@ -2323,7 +2323,17 @@ sub Run {
 
             # only get values for Ticket fields (all screens based on AgentTicketActionCommon
             # generate a new article, then article fields will be always empty at the beginign)
-            if ( $DynamicFieldConfig->{ObjectType} eq 'Ticket' ) {
+# Rother OSS / HideShowForAgentTicketCompose
+#             if ( $DynamicFieldConfig->{ObjectType} eq 'Ticket' ) {
+            if (
+                $DynamicFieldConfig->{ObjectType} eq 'Ticket'
+                && (
+                    !IsHashRefWithData( $DynFieldStates{Visibility} )
+                    || $DynFieldStates{Visibility}{ 'DynamicField_' . $DynamicFieldConfig->{Name} }
+                )
+                )
+            {
+# EO HideShowForAgentTicketCompose
 
                 # get value stored on the database from Ticket
                 $Value = $Ticket{ 'DynamicField_' . $DynamicFieldConfig->{Name} };
@@ -2455,6 +2465,7 @@ sub _Mask {
     my $LayoutObject = $Kernel::OM->Get('Kernel::Output::HTML::Layout');
     my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
 
+# Rother OSS / HideShowForAgentTicketCompose
     if ( $Param{HideAutoselected} ) {
 
         # add Autoselect JS
@@ -2463,6 +2474,7 @@ sub _Mask {
         );
     }
 
+# EO HideShowForAgentTicketCompose
     # get config for frontend module
     my $Config = $ConfigObject->Get("Ticket::Frontend::$Self->{Action}");
 
