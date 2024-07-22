@@ -377,10 +377,10 @@
                     <div class="Clear"></div>
 [% RenderBlockEnd("IsVisibleForCustomer") %]
 [% RenderBlockStart("DynamicField") %]
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #                     <div class="Row Row_DynamicField_[% Data.Name | html %]">
                     <div class="Row Row_DynamicField_[% Data.Name | html %][% Data.HiddenClass | html %]" [% Data.HiddenStyle | html %]>
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
                         [% Data.Label %]
                         <div class="Field">
                             [% Data.Field %]
@@ -393,10 +393,10 @@
 # Note: Field1 and Field2 are the names of the fields and had to be replaced with the actual
 # field names
 #[% RenderBlockStart("DynamicField_Field1") %]
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 # #                    <div class="Row Row_DynamicField_[% Data.Name | html %]">
 #                    <div class="Row Row_DynamicField_[% Data.Name | html %][% Data.HiddenClass | html %]" [% Data.HiddenStyle | html %]>
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
 #                        [% Data.Label %]
 #                        <div class="Field">
 #                            [% Data.Field %]
@@ -405,10 +405,10 @@
 #                    </div>
 #[% RenderBlockEnd("DynamicField_Field1") %]
 #[% RenderBlockStart("DynamicField_Field2") %]
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 # #                    <div class="Row Row_DynamicField_[% Data.Name | html %]">
 #                    <div class="Row Row_DynamicField_[% Data.Name | html %][% Data.HiddenClass | html %]" [% Data.HiddenStyle | html %]>
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
 #                        [% Data.Label %]
 #                        <div class="Field">
 #                            [% Data.Field %]

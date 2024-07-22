@@ -76,9 +76,9 @@ sub Run {
     my $ConfigObject  = $Kernel::OM->Get('Kernel::Config');
     my $TicketObject  = $Kernel::OM->Get('Kernel::System::Ticket');
     my $ArticleObject = $Kernel::OM->Get('Kernel::System::Ticket::Article');
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
     my $FieldRestrictionsObject = $Kernel::OM->Get('Kernel::System::Ticket::FieldRestrictions');
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
 
     my $ArticleBackendObject = $ArticleObject->BackendForChannel( ChannelName => 'Email' );
 
@@ -795,7 +795,7 @@ sub Run {
                 );
             }
         }
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 
         # skip validation of hidden fields
         my %Visibility;
@@ -823,7 +823,7 @@ sub Run {
         else {
             %Visibility = map { 'DynamicField_' . $_->{Name} => 1 } @{$DynamicField};
         }
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
 
         # create html strings for all dynamic fields
         my %DynamicFieldHTML;
@@ -874,7 +874,7 @@ sub Run {
                 }
             }
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #             my $ValidationResult = $DynamicFieldBackendObject->EditFieldValueValidate(
 #                 DynamicFieldConfig   => $DynamicFieldConfig,
 #                 PossibleValuesFilter => $PossibleValuesFilter,
@@ -924,7 +924,7 @@ sub Run {
                 }
             }
 
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
             # get field html
             $DynamicFieldHTML{ $DynamicFieldConfig->{Name} } =
                 $DynamicFieldBackendObject->EditFieldRender(
@@ -983,9 +983,9 @@ sub Run {
                 %Ticket,
                 DynamicFieldHTML => \%DynamicFieldHTML,
                 %GetParam,
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
                 Visibility       => \%Visibility,
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
             );
             $Output .= $LayoutObject->Footer(
                 Type => 'Small',
@@ -1286,7 +1286,7 @@ sub Run {
         # update Dynamic Fields Possible Values via AJAX
         my @DynamicFieldAJAX;
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         # cycle trough the activated Dynamic Fields for this screen
 #         DYNAMICFIELD:
 #         for my $DynamicFieldConfig ( @{$DynamicField} ) {
@@ -1565,7 +1565,7 @@ sub Run {
             };
         }
 
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
         my $JSON = $LayoutObject->BuildSelectionJSON(
             [
                 @ExtendedData,
@@ -2058,7 +2058,7 @@ sub Run {
                 }
             }
         }
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 
         # get list type
         my $TreeView = 0;
@@ -2286,7 +2286,7 @@ sub Run {
 
             $InitialRun = 0;
         }
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
 
         # create html strings for all dynamic fields
         my %DynamicFieldHTML;
@@ -2294,7 +2294,7 @@ sub Run {
         # cycle trough the activated Dynamic Fields for this screen
         DYNAMICFIELD:
 
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #         for my $DynamicFieldConfig ( @{$DynamicField} ) {
 #             next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
 #
@@ -2316,7 +2316,7 @@ sub Run {
                     OverridePossibleNone => 1,
                 );
             }
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
 
             # to store dynamic field value from database (or undefined)
             my $Value;
@@ -2333,12 +2333,12 @@ sub Run {
             $DynamicFieldHTML{ $DynamicFieldConfig->{Name} } =
                 $DynamicFieldBackendObject->EditFieldRender(
                     DynamicFieldConfig => $DynamicFieldConfig,
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 #                     PossibleValuesFilter => $PossibleValuesFilter,
                     PossibleValuesFilter => defined $DynFieldStates{Fields}{$i}
                     ? $DynFieldStates{Fields}{$i}{PossibleValues}
                     : undef,
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
                     Value     => $Value,
                     Mandatory =>
                     $Config->{DynamicField}->{ $DynamicFieldConfig->{Name} } == 2,
@@ -2346,9 +2346,9 @@ sub Run {
                     ParamObject     => $ParamObject,
                     AJAXUpdate      => 1,
                     UpdatableFields => $Self->_GetFieldsToUpdate(),
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
                     %UseDefault,
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
                 );
         }
 
@@ -2418,11 +2418,11 @@ sub Run {
             References       => "$References",
             TicketBackType   => $TicketBackType,
             DynamicFieldHTML => \%DynamicFieldHTML,
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
             NextState        => $GetParam{StateID} ? $StdFieldValues{NextStateID}{ $GetParam{StateID} } : '',
             HideAutoselected => $HideAutoselectedJSON,
             Visibility       => $DynFieldStates{Visibility},
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
         );
         $Output .= $LayoutObject->Footer(
             Type => 'Small',
@@ -2747,7 +2747,7 @@ sub _Mask {
 
         # get the html strings form $Param
         my $DynamicFieldHTML = $Param{DynamicFieldHTML}->{ $DynamicFieldConfig->{Name} };
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
 
         my %Hidden;
 
@@ -2763,7 +2763,7 @@ sub _Mask {
                 $DynamicFieldHTML->{Field} =~ s/(class=.+?Validate_Required)/$1_IfVisible/g;
             }
         }
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
 
         $LayoutObject->Block(
             Name => 'DynamicField',
@@ -2771,9 +2771,9 @@ sub _Mask {
                 Name  => $DynamicFieldConfig->{Name},
                 Label => $DynamicFieldHTML->{Label},
                 Field => $DynamicFieldHTML->{Field},
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
                 %Hidden,
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
             },
         );
 
@@ -2784,9 +2784,9 @@ sub _Mask {
                 Name  => $DynamicFieldConfig->{Name},
                 Label => $DynamicFieldHTML->{Label},
                 Field => $DynamicFieldHTML->{Field},
-# Rother OSS / HideShowInAgentTicketCompose
+# Rother OSS / HideShowForAgentTicketCompose
                 %Hidden,
-# EO HideShowInAgentTicketCompose
+# EO HideShowForAgentTicketCompose
             },
         );
     }
