@@ -806,12 +806,12 @@ sub Run {
         # call ticket ACLs for DynamicFields to check field visibility
         my $ACLResult = $TicketObject->TicketAcl(
             %GetParam,
-            CustomerUserID => $Ticket{CustomerUser} || '',
-            Action         => $Self->{Action},
-            ReturnType     => 'Form',
-            ReturnSubType  => '-',
-            Data           => \%DynamicFieldAcl,
-            UserID         => $Self->{UserID},
+            Action        => $Self->{Action},
+            TicketID      => $Self->{TicketID},
+            ReturnType    => 'Form',
+            ReturnSubType => '-',
+            Data          => \%DynamicFieldAcl,
+            UserID        => $Self->{UserID},
         );
         if ($ACLResult) {
             %Visibility = map { 'DynamicField_' . $_->{Name} => 0 } @{$DynamicField};
