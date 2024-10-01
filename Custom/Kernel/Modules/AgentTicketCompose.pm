@@ -4,7 +4,7 @@
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
 # Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
 # --
-# $origin: otobo - 4dade81e7e04433cb2aed36af0c8727d822a1c61 - Kernel/Modules/AgentTicketCompose.pm
+# $origin: otobo - 39d141367d66ee03eee8c39b64af64e9f264763d - Kernel/Modules/AgentTicketCompose.pm
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -1913,8 +1913,10 @@ sub Run {
         # get std attachment object
         my $StdAttachmentObject = $Kernel::OM->Get('Kernel::System::StdAttachment');
 
-        # add std. attachments to email
+        # handle response template attachments and state
         if ( $GetParam{ResponseID} ) {
+
+            # add std. attachments to email
             my %AllStdAttachments = $StdAttachmentObject->StdAttachmentStandardTemplateMemberList(
                 StandardTemplateID => $GetParam{ResponseID},
             );
@@ -1926,6 +1928,12 @@ sub Run {
                     %Data,
                 );
             }
+
+            # set response preselected state
+            my %Response = $Kernel::OM->Get('Kernel::System::ResponseTemplatesStatePreselection')->StandardTemplateGet(
+                ID => $GetParam{ResponseID},
+            );
+            $GetParam{StateID} ||= $Response{PreSelectedTicketStateID};
         }
 
         # get all attachments meta data
@@ -2810,12 +2818,6 @@ sub _Mask {
         $State{SelectedID} = $Param{GetParam}->{StateID};
     }
     else {
-        if ( $Param{GetParam}->{ResponseID} ) {
-            my %Response = $Kernel::OM->Get('Kernel::System::ResponseTemplatesStatePreselection')->StandardTemplateGet(
-                ID => $Param{GetParam}->{ResponseID},
-            );
-            $State{SelectedID} = $Response{PreSelectedTicketStateID};
-        }
         $State{SelectedValue} //= $Config->{StateDefault};
     }
     $Param{NextStatesStrg} = $LayoutObject->BuildSelection(
