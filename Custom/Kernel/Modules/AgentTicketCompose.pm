@@ -4,7 +4,7 @@
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
 # Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
-# $origin: otobo - de795e41b417658c571131ad07377c5340ce4db9 - Kernel/Modules/AgentTicketCompose.pm
+# $origin: otobo - ce2ed9cd93602ac07c564c4f193cb147b03532e2 - Kernel/Modules/AgentTicketCompose.pm
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -398,7 +398,7 @@ sub Run {
             my $CustomerDisabled = '';
             my $CountAux         = $CustomerCounter++;
             if ( $CustomerError ne '' ) {
-                $CustomerDisabled = 'disabled="disabled"';
+                $CustomerDisabled = 'disabled';
                 $CountAux         = $Count . 'Error';
             }
 
@@ -464,7 +464,7 @@ sub Run {
             my $CustomerDisabledCc = '';
             my $CountAuxCc         = $CustomerCounterCc++;
             if ( $CustomerErrorCc ne '' ) {
-                $CustomerDisabledCc = 'disabled="disabled"';
+                $CustomerDisabledCc = 'disabled';
                 $CountAuxCc         = $Count . 'Error';
             }
 
@@ -529,7 +529,7 @@ sub Run {
             my $CustomerDisabledBcc = '';
             my $CountAuxBcc         = $CustomerCounterBcc++;
             if ( $CustomerErrorBcc ne '' ) {
-                $CustomerDisabledBcc = 'disabled="disabled"';
+                $CustomerDisabledBcc = 'disabled';
                 $CountAuxBcc         = $Count . 'Error';
             }
 
@@ -1487,18 +1487,15 @@ sub Run {
 
                 my $Key = $Object->Option( %GetParam, Config => $Jobs{$Job} );
                 if ($Key) {
-                    push(
-                        @ExtendedData,
-                        {
-                            Name         => $Key,
-                            Data         => \%Data,
-                            SelectedID   => $GetParam{$Key},
-                            Translation  => 1,
-                            PossibleNone => 1,
-                            Multiple     => $Multiple,
-                            Max          => 150,
-                        }
-                    );
+                    push @ExtendedData, {
+                        Name         => $Key,
+                        Data         => \%Data,
+                        SelectedID   => $GetParam{$Key},
+                        Translation  => 1,
+                        PossibleNone => 1,
+                        Multiple     => $Multiple,
+                        Max          => 150,
+                    };
                 }
             }
         }
