@@ -2,9 +2,9 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2026 Rother OSS GmbH, https://otobo.io/
 # --
-# $origin: otobo - ce2ed9cd93602ac07c564c4f193cb147b03532e2 - Kernel/Modules/AgentTicketCompose.pm
+# $origin: otobo - 6efdc7bf2a3325277cd79a60f0f2407f8ad59e87 - Kernel/Modules/AgentTicketCompose.pm
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -44,31 +44,19 @@ sub new {
     my ( $Type, %Param ) = @_;
 
     # allocate new hash for object
-# Rother OSS / HideShowForAgentTicketCompose
-#     my $Self = {%Param};
-#     bless( $Self, $Type );
     my $Self = bless {%Param}, $Type;
 
     my $ParamObject = $Kernel::OM->Get('Kernel::System::Web::Request');
-# EO HideShowForAgentTicketCompose
 
     # Try to load draft if requested.
     if (
         $Kernel::OM->Get('Kernel::Config')->Get("Ticket::Frontend::$Self->{Action}")->{FormDraft}
-# Rother OSS / HideShowForAgentTicketCompose
-#         && $Kernel::OM->Get('Kernel::System::Web::Request')->GetParam( Param => 'LoadFormDraft' )
-#         && $Kernel::OM->Get('Kernel::System::Web::Request')->GetParam( Param => 'FormDraftID' )
         && $ParamObject->GetParam( Param => 'LoadFormDraft' )
         && $ParamObject->GetParam( Param => 'FormDraftID' )
-# EO HideShowForAgentTicketCompose
         )
     {
-# Rother OSS / HideShowForAgentTicketCompose
-#         $Self->{LoadedFormDraftID} = $Kernel::OM->Get('Kernel::System::Web::Request')->LoadFormDraft(
-#             FormDraftID => $Kernel::OM->Get('Kernel::System::Web::Request')->GetParam( Param => 'FormDraftID' ),
         $Self->{LoadedFormDraftID} = $ParamObject->LoadFormDraft(
             FormDraftID => $ParamObject->GetParam( Param => 'FormDraftID' ),
-# EO HideShowForAgentTicketCompose
             UserID      => $Self->{UserID},
         );
     }
@@ -192,17 +180,7 @@ sub Run {
         );
     }
 
-# Rother OSS / HideShowForAgentTicketCompose
-#     # get needed objects
-#     my $ConfigObject  = $Kernel::OM->Get('Kernel::Config');
-#     my $TicketObject  = $Kernel::OM->Get('Kernel::System::Ticket');
-#     my $ArticleObject = $Kernel::OM->Get('Kernel::System::Ticket::Article');
-#
-#     my $ArticleBackendObject = $ArticleObject->BackendForChannel( ChannelName => 'Email' );
-#
-#     # get config for frontend module
     # get config of frontend module
-# EO HideShowForAgentTicketCompose
     my $Config = $ConfigObject->Get("Ticket::Frontend::$Self->{Action}");
 
     # check permissions
@@ -246,10 +224,7 @@ sub Run {
 
     # Check for failed draft loading request.
     if (
-# Rother OSS / HideShowForAgentTicketCompose
-#         $Kernel::OM->Get('Kernel::System::Web::Request')->GetParam( Param => 'LoadFormDraft' )
         $ParamObject->GetParam( Param => 'LoadFormDraft' )
-# EO HideShowForAgentTicketCompose
         && !$Self->{LoadedFormDraftID}
         )
     {
@@ -261,10 +236,7 @@ sub Run {
 
     my %Ticket = $TicketObject->TicketGet(
         TicketID      => $Self->{TicketID},
-# Rother OSS / HideShowForAgentTicketCompose
-#         DynamicFields => 1
         DynamicFields => 1,
-# EO HideShowForAgentTicketCompose
     );
 
     # get lock state
@@ -321,11 +293,7 @@ sub Run {
         }
     }
 
-# Rother OSS / HideShowForAgentTicketCompose
-#     # get param object
-#     my $ParamObject = $Kernel::OM->Get('Kernel::System::Web::Request');
     my $ArticleBackendObject = $ArticleObject->BackendForChannel( ChannelName => 'Email' );
-# EO HideShowForAgentTicketCompose
 
     # get params
     my %GetParam;
@@ -593,16 +561,6 @@ sub Run {
 # EO HideShowForAgentTicketCompose
 
     # convert dynamic field values into a structure for ACLs
-# Rother OSS / HideShowForAgentTicketCompose
-#     my %DynamicFieldACLParameters;
-#     DYNAMICFIELD:
-#     for my $DynamicFieldItem ( sort keys %DynamicFieldValues ) {
-#         next DYNAMICFIELD if !$DynamicFieldItem;
-#         next DYNAMICFIELD if !defined $DynamicFieldValues{$DynamicFieldItem};
-#
-#         $DynamicFieldACLParameters{ 'DynamicField_' . $DynamicFieldItem } = $DynamicFieldValues{$DynamicFieldItem};
-#     }
-#     $GetParam{DynamicField} = \%DynamicFieldACLParameters;
     {
         my %DynamicFieldACLParameters;
         DYNAMICFIELD:
@@ -614,7 +572,6 @@ sub Run {
         }
         $GetParam{DynamicField} = \%DynamicFieldACLParameters;
     }
-# EO HideShowForAgentTicketCompose
 
     # transform pending time, time stamp based on user time zone
     if (
@@ -630,13 +587,8 @@ sub Run {
         );
     }
 
-# Rother OSS / HideShowForAgentTicketCompose
-#     # get needed objects
-#     my $UploadCacheObject = $Kernel::OM->Get('Kernel::System::Web::UploadCache');
-#     my $MainObject        = $Kernel::OM->Get('Kernel::System::Main');
     # get upload cache object
     my $UploadCacheObject = $Kernel::OM->Get('Kernel::System::Web::UploadCache');
-# EO HideShowForAgentTicketCompose
 
     # send email
     if ( $Self->{Subaction} eq 'SendEmail' || $Self->{LoadedFormDraftID} ) {
@@ -720,11 +672,8 @@ sub Run {
         # Check draft name.
         if (
             $FormDraftAction
-# Rother OSS / HideShowForAgentTicketCompose
-#             && ( $FormDraftAction eq 'Add' || $FormDraftAction eq 'Update' )
             &&
             ( $FormDraftAction eq 'Add' || $FormDraftAction eq 'Update' )
-# EO HideShowForAgentTicketCompose
             )
         {
             my $Title = $ParamObject->GetParam( Param => 'FormDraftTitle' );
@@ -1136,10 +1085,7 @@ sub Run {
         }
 # EO HideShowForAgentTicketCompose
 
-# Rother OSS / HideShowForAgentTicketCompose
-#         # check if there is an error
         # check errors
-# EO HideShowForAgentTicketCompose
         if (%Error) {
 
             my $Output = $LayoutObject->Header(
@@ -1399,10 +1345,7 @@ sub Run {
             );
         }
 
-# Rother OSS / HideShowForAgentTicketCompose
-#         # redirect
         # load new URL in parent window and close popup
-# EO HideShowForAgentTicketCompose
         if (
             $StateData{TypeName} =~ /^close/i
             && !$ConfigObject->Get('Ticket::Frontend::RedirectAfterCloseDisabled')
@@ -2360,7 +2303,7 @@ sub Run {
             }
         }
 
-        # build new repsonse format based on template
+        # build new response format based on template
         $Data{ResponseFormat} = $LayoutObject->Output(
             Template => $ResponseFormat,
             Data     => { %Param, %DataHTML },
@@ -3237,6 +3180,13 @@ sub _Mask {
 
         $LoadedFormDraft->{ChangeByName} = $Kernel::OM->Get('Kernel::System::User')->UserName(
             UserID => $LoadedFormDraft->{ChangeBy},
+        );
+    }
+
+    # explanatory message about asterisk
+    if ( $ConfigObject->Get('Ticket::Frontend::AsteriskExplanation') ) {
+        $LayoutObject->Block(
+            Name => 'AsteriskExplanation',
         );
     }
 
