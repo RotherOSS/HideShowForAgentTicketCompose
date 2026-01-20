@@ -538,11 +538,6 @@ sub Run {
 #                 LayoutObject       => $LayoutObject,
 #             );
 #     }
-    # ACL compatibility translation
-    my %ACLCompatGetParam = (
-        StateID => $GetParam{NewStateID},
-    );
-
     # get dynamic field backend object
     my $DynamicFieldBackendObject = $Kernel::OM->Get('Kernel::System::DynamicField::Backend');
 
@@ -1555,7 +1550,6 @@ sub Run {
         );
         my %ChangedElements        = $ElementChanged ? ( $ElementChanged => 1 ) : ();
         my %ChangedElementsDFStart = %ChangedElements;
-        my %ChangedStdFields       = $ElementChanged && $ElementChanged !~ /^DynamicField_/ ? %ChangedElements : ();
 
         my $LoopProtection = 100;
         my %StdFieldValues;
@@ -2621,7 +2615,6 @@ sub Run {
                     Autoselect                => $Autoselect,
                     ACLPreselection           => $ACLPreselection,
                     LoopProtection            => \$LoopProtection,
-                    InitialRun                => $InitialRun,
                 );
 
                 # combine FieldStates
