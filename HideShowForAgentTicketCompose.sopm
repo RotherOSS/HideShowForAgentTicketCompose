@@ -6,7 +6,8 @@
     <Vendor>Rother OSS GmbH</Vendor>
     <URL>https://otobo.io/</URL>
     <License>GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007</License>
-    <Description Lang="en">The package HideShowForAgentTicketCompose enables the usage of hiding and showing dynamic fields via ACLs in AgentTicketCompose.</Description>
+    <Description Lang="en">Enables the usage of hiding and showing dynamic fields via ACLs in ticket create screens.</Description>
+    <Description Lang="hu">Lehetővé teszi a dinamikus mezők ACL-eken keresztül történő elrejtésének és megjelenítésének használatát a jegylétrehozási képernyőkön.</Description>
     <Filelist>
         <File Permission="660" Location="Custom/Kernel/Modules/AgentTicketCompose.pm" />
         <File Permission="660" Location="Custom/Kernel/Output/HTML/Templates/Standard/AgentTicketCompose.tt" />
